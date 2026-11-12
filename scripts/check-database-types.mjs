@@ -18,7 +18,9 @@ const sql = readdirSync(migrationsDir)
   .join("\n");
 const tables = [...sql.matchAll(/create table public\.([a-z_]+)/g)].map((match) => match[1]);
 const types = readFileSync(typesFile, "utf8");
-const missing = tables.filter((table) => !types.includes(`${table}:`));
+const missing = tables.filter(
+  (table) => !types.includes(`"${table}":`) && !types.includes(`${table}:`),
+);
 
 if (tables.length === 0) {
   console.error("no tables found in supabase/migrations");

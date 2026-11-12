@@ -1,12 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { readPublicSupabaseConfig } from "../../auth/env";
+import type { Database } from "../database.types";
 
 export async function createServerSupabase() {
   const config = readPublicSupabaseConfig();
   if (!config) return null;
   const cookieStore = await cookies();
-  return createServerClient(config.url, config.anonKey, {
+  return createServerClient<Database>(config.url, config.anonKey, {
     cookieOptions: {
       path: "/",
       sameSite: "lax",
