@@ -22,7 +22,7 @@ No `.env`, `.env.local`, `.env.development`, `.env.test`, or `.env.production` f
 
 ## Public variables
 
-`NEXT_PUBLIC_` values are embedded in the browser bundle. The only approved public variable in Phase 00 is `NEXT_PUBLIC_APP_NAME`. Service-role keys, Gemini keys, email credentials, and Web Push private keys must not use that prefix.
+`NEXT_PUBLIC_` values are embedded in the browser bundle. Approved public values are `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_SUPABASE_URL`, and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. The anon key is public because row-level security, not the key, restricts rows. Service-role keys, Gemini keys, email credentials, and Web Push private keys must not use that prefix.
 
 ## Local setup
 

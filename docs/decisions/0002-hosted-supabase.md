@@ -14,6 +14,7 @@ Use hosted Supabase for PostgreSQL, Auth, Realtime, and Storage. Do not run the 
 
 ## Consequences
 
-- Local Phase 00 does not require a Supabase project.
-- Phase 02 must add migrations, generated types, and two-user RLS tests before any product data is stored.
+- Local development of the fixture UI does not require a Supabase project. Auth stays unconfigured until the root `.env` has the project URL and anon key.
+- Phase 02 adds the foundation migration, generated type check, and two-user RLS tests. Run `pnpm db:test` before calling isolation verified.
+- The service-role key stays in the root `.env` or deployment secrets. The Next.js app does not read it.
 - Backup and restore depend on the hosted project's plan. That is an operations item for the release phase, not something this repository can prove yet.

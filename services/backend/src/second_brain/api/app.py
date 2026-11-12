@@ -8,6 +8,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -66,6 +67,13 @@ def create_app() -> FastAPI:
         title="Second Brain API",
         version=__version__,
         lifespan=lifespan,
+    )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[settings.frontend_origin],
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+        allow_headers=["authorization", "content-type", "x-request-id"],
     )
     app.add_middleware(RequestIdMiddleware)
     app.add_exception_handler(AppError, app_error_handler)

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { addDays, addMonths, formatLong, formatMonth } from "../calendar/dates";
+import { accountLabel } from "../auth/account";
+import type { AuthView } from "../auth/view";
 import { DEMO_NOTICE, type CalendarView, type PreviewMode } from "../demo/types";
 import { useWorkspace } from "../workspace/store";
 import { CalendarPane } from "./CalendarPane";
@@ -26,7 +28,7 @@ const PREVIEWS: { id: PreviewMode; label: string }[] = [
   { id: "empty", label: "Empty" },
 ];
 
-export function WorkspaceShell({ children }: { children: ReactNode }) {
+export function WorkspaceShell({ children, auth }: { children: ReactNode; auth: AuthView }) {
   const pathname = usePathname();
   const {
     today,
@@ -76,6 +78,16 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
               <IconSearch />
               <span className="hidden sm:inline">Search</span>
             </button>
+            <Link
+              href={auth.status === "ready" ? "/account" : "/sign-in"}
+              className="inline-flex min-h-11 max-w-40 items-center truncate rounded-[10px] px-3 text-sm text-ink hover:bg-canvas"
+            >
+              {auth.status === "ready"
+                ? accountLabel(auth.account)
+                : auth.status === "error"
+                  ? "Account"
+                  : "Sign in"}
+            </Link>
             <Link
               href="/"
               className="hidden min-h-11 items-center rounded-[10px] px-3 text-sm text-ink hover:bg-canvas lg:inline-flex"
@@ -177,6 +189,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
         ) : null}
       </header>
       <p className="border-b border-line bg-canvas px-3 py-2 text-xs text-muted">{DEMO_NOTICE}</p>
+      <AuthStatus auth={auth} />
       <PreviewNote />
       <div
         id="workspace"
@@ -198,6 +211,31 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
       <AssistantDock />
     </div>
   );
+}
+
+function AuthStatus({ auth }: { auth: AuthView }) {
+  if (auth.status === "unconfigured") {
+    return (
+      <p className="border-b border-line px-3 py-2 text-xs text-muted">
+        Sign-in is off until Supabase is configured. Fixtures stay in this tab.
+      </p>
+    );
+  }
+  if (auth.status === "error") {
+    return (
+      <p role="alert" className="border-b border-line px-3 py-2 text-xs text-ink">
+        {auth.message}
+      </p>
+    );
+  }
+  if (auth.status === "ready" && !auth.account.verified) {
+    return (
+      <p className="border-b border-line px-3 py-2 text-xs text-muted">
+        Email is not confirmed. The workspace is still available.
+      </p>
+    );
+  }
+  return null;
 }
 
 function PreviewNote() {

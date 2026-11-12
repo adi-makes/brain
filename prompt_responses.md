@@ -310,3 +310,138 @@ FINAL
 Append exact prompt and exact final Cursor response to prompt_responses.md. Report routes, components, design tokens, fixture boundaries, screenshots, viewport/theme matrix, accessibility results, tests, build, Git hash/push, limitations. Stop for approval; do not start Phase 02.
 use any skillls available locally or gloabbly to generate the best ui design. if needed install the skillls needed
 ```
+
+<!-- second-brain-journal-entry -->
+
+## jrn_20261112T075133Z_e64c4c4e
+
+- kind: response
+- phase: 01
+- timestamp_utc: 2026-11-12T07:51:33Z
+- conversation_id: 77e3abd1-5c49-44c6-ad72-fc6cdc452d4c
+- generation_id: 3b26ee6c-e26f-43a7-b2d5-52ea5b7a673b
+- cursor_version: 3.29.15
+- capture_status: HOOK VERIFIED
+- response_status: 
+- pairs_with: jrn_20261112T065947Z_4f575263
+- attachment_count: 0
+- text_present: true
+
+```text
+Phase 01 is on `phase/01-design-system` at `5170203ec646ce31380bbff2168d27e5b4edd559`, pushed to `origin`. This is a local UI prototype. Nothing is saved as product data, and Phase 02 has not been started.
+
+## Routes
+
+- `/` is the workspace: date navigation, day/week/month calendar, selected-day detail, Today, Upcoming Work, To-Do, and Reminders.
+- `/settings` is theme, display name, week start, and density.
+- Search, quick add, and the assistant are overlays, not routes.
+
+## Design tokens
+
+Light canvas `#f4f0e8`, surface `#fbf8f3`, ink `#221f1b`. Dark canvas `#171614` (not black), surface `#211f1c`, ink `#f4efe8`. Accent is muted indigo `#3f3d73` / `#c5c1ea`. Radius is 10px. Type is Inter. Theme choice `light`, `dark`, or `system` is stored in `localStorage` under `second-brain-theme`.
+
+## Fixture boundary
+
+Sample records live only in `apps/frontend/src/demo/`. The calendar reads them through `src/calendar/adapter.ts`. Quick-add and task completion change that in-memory list for the current tab. A visible notice says they are not saved. Theme, display name, week start, and density are the only values written to `localStorage`. The assistant can show a demo reply and a proposal preview. **Apply proposal** stays disabled and does not write records.
+
+## What I inspected
+
+I opened the screenshots under `artifacts/screenshots/01-design-system/`, including both themes at 360×800, 390×844, 430×932, 768×1024, 1366×768, 1440×900, and 1920×1080, plus 1440 month, quick-add, assistant, empty, error, and settings. Playwright also checked that those pages do not scroll sideways and recorded no console errors during capture.
+
+On a phone, week view is a vertical agenda so titles stay readable. From 1024px up it is a time grid, with the selected day pinned under the grid. Today, Upcoming Work, and To-Do sit in one rail. Upcoming work starts after today, so the same task is not repeated in both sections.
+
+## Checks
+
+- Unit tests: 9 passed.
+- Playwright: 8 interaction tests passed, including navigation, theme persistence, quick-add validation, calendar view and arrow keys, to-do filters, search, and the 390px bottom nav. axe-core reported no serious or critical violations on `/` or `/settings`.
+- Visual capture: 14 viewport shots passed, with no horizontal overflow and no console errors.
+- Frontend production build succeeded.
+- Env layout check passed. Secret scan found no leaks.
+
+## Remaining limits
+
+- Below 1024px, the later days of the week sit in the calendar scroller. The selected-day summary stays on screen.
+- At 1366×768, hours after about 15:00 are in that same scroller. The summary still lists the day's events.
+- All-day titles in the desktop week columns truncate when the column is narrow.
+- The open assistant panel covers the lower part of the rail. That is the floating panel, and it still cannot write records.
+- `frontend-design` did not install from the source that was tried. `react-best-practices` was not installed under that name. The installed UI skill's default teal/orange marketing palette was not used, because it conflicts with this brief. The web interface guidelines were applied for focus, labels, touch size, reduced motion, and form behavior.
+
+Compare and open a pull request from https://github.com/adi-makes/brain/pull/new/phase/01-design-system. The journal hook will append this response to `prompt_responses.md` after the turn, so that file may show as uncommitted again.
+```
+
+<!-- second-brain-journal-entry -->
+
+## jrn_20261112T075224Z_9278a053
+
+- kind: response
+- phase: 01
+- timestamp_utc: 2026-11-12T07:52:24Z
+- conversation_id: 77e3abd1-5c49-44c6-ad72-fc6cdc452d4c
+- generation_id: df6c877a-247c-4698-912a-3306b7824b97
+- cursor_version: 3.29.15
+- capture_status: HOOK VERIFIED
+- response_status: 
+- pairs_with: UNMATCHED
+- attachment_count: 0
+- text_present: true
+
+```text
+The Playwright browser install finished successfully and was already used for the Phase 01 tests and screenshots.
+
+The design-skill install did not add anything new. The frontend-design source had no valid skill file, and the React skills package did not contain an entry named `react-best-practices`. The workspace on `phase/01-design-system` is unchanged.
+```
+
+<!-- second-brain-journal-entry -->
+
+## jrn_20261112T082220Z_a8d21ad9
+
+- kind: prompt
+- phase: 02
+- timestamp_utc: 2026-11-12T08:22:20Z
+- conversation_id: 77e3abd1-5c49-44c6-ad72-fc6cdc452d4c
+- generation_id: c420a1a3-182e-4765-bbb7-0bdec7832f60
+- cursor_version: 3.29.15
+- capture_status: HOOK VERIFIED
+- response_status: PENDING
+- pairs_with: 
+- attachment_count: 2
+- text_present: true
+
+```text
+# SECOND BRAIN — PHASE 02: SUPABASE DATA FOUNDATION AND AUTH
+
+Read Part A, AGENTS.md and prior phase journal. Inspect existing migrations and Git status. Implement Phase 02 only. Preserve the Phase 01 UI; do not build productivity CRUD or AI.
+
+GOAL
+Establish a secure hosted-Supabase integration, migration discipline, authentication and ownership-safe RLS foundation.
+
+DATABASE DESIGN
+Design and document the canonical schema before implementing migrations. Include user/profile and device/session foundations; canonical work items; events; notes; reminders; recurrence series/exceptions; planning blocks; effort logs; auto-surface state; operation journal/batch items; notification deliveries/outbox; idempotency keys; AI approval records; attachment metadata. Create only tables needed for the schema foundation now; later phases may add columns/tables through migrations. Do not create duplicate task records for Today/Upcoming/To-Do.
+
+Use UUID primary keys, `timestamptz` for instants, local-date semantics for all-day records, ownership-safe composite FKs/constraints, checks, unique constraints, indexes, updated-at/version fields where appropriate, audit metadata and soft-delete conventions. Define required category/severity/effort/deadline constraints explicitly. Document delete/cascade behavior.
+
+SUPABASE
+Add Supabase CLI configuration and versioned SQL migrations. Keep hosted Supabase as target; local CLI may be used for tests if Docker is available. Add generated database types and a documented regeneration process. Do not commit secrets.
+
+AUTH
+Implement Supabase Auth integration in Next.js using maintained SSR-safe patterns. Support sign-in, sign-up, sign-out, session refresh and protected route handling. Separate authenticated, verified and AI-permitted states; manual product use must not be unnecessarily blocked by AI verification. Never expose service-role key to browser. Use root `.env` only.
+
+RLS AND STORAGE
+Enable RLS on every user-owned table. Enforce ownership on every child relation, including nested rows and join tables. Storage policies must enforce owner-scoped object paths, permitted MIME types, size limits and authorization. Avoid trusting client user IDs. Use JWT-derived identity and secure server-side access. Add SQL/RLS tests for two distinct users: user A cannot read/write/update/delete user B's rows or files. Test anonymous access and ownership changes. Add negative tests for cross-user foreign-key attacks.
+
+SECURITY
+Set secure cookies and headers, validate redirect destinations, prevent open redirects, CSRF and session leakage. Keep CORS narrow. Add rate-limiting design notes. Never log tokens or secrets.
+
+INTEGRATION
+Connect UI auth states to the Phase 01 shell without redesigning it. Add proper loading, error and unauthenticated states. Do not implement task/event/note CRUD yet.
+
+TESTING
+Run migration validation, Supabase local tests where available, generated-type checks, auth integration tests and two-user RLS tests. If credentials/local Supabase are unavailable, separate tests that ran from blocked tests and provide exact setup steps; do not claim security is verified without executing isolation tests.
+
+GIT
+Branch `phase/02-supabase-auth`. Env-layout and secret scans. Review SQL carefully. Commit `feat(auth): add Supabase schema foundation and RLS-secured authentication`; push branch if configured. Never force push.
+
+JOURNAL AND REPORT
+Capture exact prompt and exact Cursor final response. Report schema, migrations, RLS matrix, storage policies, auth flow, test results, unverified cases, env variables, Git status and migration rollback concerns. Stop for approval.
+also make sure the readme and other docs are updated after each task/prompt. the readme must have project info as well all the setup info so that any user can know whats ot be odne tc. also if anything needs to be domne by user(crate and set supabase project and settings, api keys etc) let me knoiw
+```

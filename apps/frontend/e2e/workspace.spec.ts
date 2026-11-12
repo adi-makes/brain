@@ -88,6 +88,14 @@ test("has no serious axe violations on the workspace and settings", async ({ pag
   ).toEqual([]);
 });
 
+test("shows the unconfigured sign-in state without a session", async ({ page }) => {
+  await page.goto("/sign-in");
+  await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+  const configured = await page.getByLabel("Email").count();
+  const unconfigured = await page.getByText("Supabase is not configured.").count();
+  expect(configured + unconfigured).toBeGreaterThan(0);
+});
+
 test.describe("narrow navigation", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 

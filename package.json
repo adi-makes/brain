@@ -14,7 +14,9 @@
     "lint": "pnpm exec turbo lint && pnpm exec prettier --check .",
     "format": "pnpm exec prettier --write .",
     "typecheck": "pnpm exec turbo typecheck",
-    "test": "pnpm exec turbo test && node --test scripts/check-env-layout.test.mjs && python3 -m unittest discover -s scripts/tests -v",
+    "test": "pnpm exec turbo test && node --test scripts/check-env-layout.test.mjs && node scripts/check-database-types.mjs && python3 -m unittest discover -s scripts/tests -v",
+    "db:types": "pnpm exec supabase gen types typescript --local > apps/frontend/src/lib/database.types.ts",
+    "db:test": "pnpm exec supabase test db",
     "build": "node scripts/with-root-env.mjs pnpm exec turbo build",
     "check:env-layout": "node scripts/check-env-layout.mjs",
     "check:prompt-journal": "python3 scripts/verify-prompt-journal.py",
@@ -26,6 +28,7 @@
   },
   "devDependencies": {
     "prettier": "^3.6.2",
+    "supabase": "^3.1.0",
     "turbo": "^2.6.1"
   },
   "pnpm": {

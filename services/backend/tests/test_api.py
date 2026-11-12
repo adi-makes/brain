@@ -17,6 +17,26 @@ def test_health_ready_and_version() -> None:
     assert version.json()["version"] == "v1"
 
 
+def test_cors_allows_only_the_configured_origin() -> None:
+    with TestClient(create_app()) as client:
+        allowed = client.options(
+            "/health",
+            headers={
+                "Origin": "http://127.0.0.1:3000",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+        blocked = client.options(
+            "/health",
+            headers={
+                "Origin": "https://evil.example",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+    assert allowed.headers.get("access-control-allow-origin") == "http://127.0.0.1:3000"
+    assert blocked.headers.get("access-control-allow-origin") is None
+
+
 def test_not_found_is_structured() -> None:
     with TestClient(create_app()) as client:
         response = client.get("/missing", headers={"x-request-id": "req-1"})

@@ -11,12 +11,12 @@ Run on every pull request and on pushes to `main`:
 - `pnpm check:prompt-journal`
 - Gitleaks
 
-Playwright is configured in `apps/frontend/playwright.config.ts`. The Playwright workflow is manual until browser specs exist. It does not use `continue-on-error`.
+Playwright is configured in `apps/frontend/playwright.config.ts` and runs on pull requests. It does not use `continue-on-error`. Visual capture stays local (`VISUAL=1`).
 
 ## Later phases
 
 - Phase 01 adds component tests and Playwright coverage, including keyboard and responsive checks, plus screenshot review.
-- Phase 02 adds migration tests and two-user RLS tests. Those tests are required before calling authorization done.
+- Phase 02 adds `pnpm db:test` (`supabase test db`) for two-user RLS and storage isolation. Docker has to be running. A green frontend unit suite does not prove RLS.
 - API tests should cover validation, conflicts, idempotency, and ownership.
 - Worker tests should cover claims, retries, and shutdown once jobs exist.
 - Do not treat a green unit suite as visual QA or as a penetration test.

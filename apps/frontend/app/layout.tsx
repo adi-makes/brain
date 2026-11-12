@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Inter } from "next/font/google";
+import { readAuthView } from "../src/auth/view";
 import { WorkspaceProvider } from "../src/workspace/store";
 import { WorkspaceShell } from "../src/components/WorkspaceShell";
 import "./globals.css";
@@ -18,7 +19,8 @@ export const metadata: Metadata = {
 
 const themeBoot = `(function(){try{var t=localStorage.getItem("second-brain-theme");var d=t==="dark"||(t!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);document.documentElement.dataset.theme=t||"system";}catch(e){}})();`;
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const auth = await readAuthView();
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
@@ -26,7 +28,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className="min-h-dvh font-sans antialiased">
         <WorkspaceProvider>
-          <WorkspaceShell>{children}</WorkspaceShell>
+          <WorkspaceShell auth={auth}>{children}</WorkspaceShell>
         </WorkspaceProvider>
       </body>
     </html>

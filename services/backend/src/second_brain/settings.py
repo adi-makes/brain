@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     backend_port: int = 8000
     worker_health_port: int = 8001
     app_version: str = "0.0.0"
+    frontend_origin: str = "http://127.0.0.1:3000"
 
 
 @lru_cache(maxsize=1)
