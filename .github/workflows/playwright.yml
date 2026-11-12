@@ -1,9 +1,9 @@
 name: Playwright
 
-# Configured for later phases. This workflow does not run on pull requests until
-# browser specs exist. It is not marked continue-on-error.
+# Browser specs exist from Phase 01. Visual capture stays local (VISUAL=1).
 on:
   workflow_dispatch:
+  pull_request:
 
 jobs:
   e2e:

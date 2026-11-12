@@ -1,0 +1,103 @@
+import { addDays } from "../calendar/dates";
+import type { DemoItem } from "./types";
+
+export function buildDemoItems(today: string): DemoItem[] {
+  return [
+    {
+      id: "event-studio",
+      kind: "event",
+      title: "Studio review",
+      date: today,
+      start: "10:00",
+      end: "11:30",
+      reason: "On the calendar",
+    },
+    {
+      id: "event-walk",
+      kind: "event",
+      title: "Walk before dinner",
+      date: today,
+      start: "18:00",
+      end: "18:40",
+    },
+    {
+      id: "event-library",
+      kind: "event",
+      title: "Library return",
+      date: addDays(today, 1),
+      allDay: true,
+    },
+    {
+      id: "event-reading",
+      kind: "event",
+      title: "Reading group",
+      date: addDays(today, 3),
+      start: "19:00",
+      end: "20:30",
+    },
+    {
+      id: "task-note",
+      kind: "task",
+      title: "Draft the November note",
+      date: today,
+      severity: "high",
+      reason: "Due today · High",
+    },
+    {
+      id: "task-fee",
+      kind: "task",
+      title: "Pay the studio fee",
+      date: addDays(today, 2),
+      severity: "critical",
+      reason: "Due soon · Critical",
+    },
+    {
+      id: "task-coat",
+      kind: "task",
+      title: "Mend the coat",
+      date: addDays(today, 6),
+      severity: "medium",
+      reason: "Due this week · Medium",
+    },
+    {
+      id: "task-archive",
+      kind: "task",
+      title: "File last month’s receipts",
+      severity: "low",
+      done: false,
+      reason: "No due date · Low",
+    },
+    {
+      id: "task-done",
+      kind: "task",
+      title: "Water the fig",
+      date: addDays(today, -1),
+      severity: "low",
+      done: true,
+      reason: "Completed yesterday",
+    },
+    {
+      id: "reminder-studio",
+      kind: "reminder",
+      title: "Leave for the studio",
+      date: today,
+      start: "09:30",
+      reason: "30 minutes before Studio review",
+    },
+    {
+      id: "reminder-library",
+      kind: "reminder",
+      title: "Bring the overdue novel",
+      date: addDays(today, 1),
+      start: "09:00",
+      reason: "Morning of Library return",
+    },
+    {
+      id: "note-margin",
+      kind: "note",
+      title: "Margin for the essay",
+      body: "Keep the opening paragraph short. The calendar, not the assistant, is the page.",
+      date: today,
+    },
+  ];
+}
