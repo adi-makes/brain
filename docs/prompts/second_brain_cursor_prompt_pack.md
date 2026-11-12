@@ -3,6 +3,8 @@
 > **How to use this pack:** Execute only one phase at a time, in order. Paste the complete prompt for that phase into Cursor Agent. Do not paste all phases into one Cursor conversation. Review the engineering report, verify the tests yourself, inspect the Git diff, and approve the phase before starting the next one.
 >
 > **Project status:** These are implementation prompts, not evidence that any phase has been implemented. The repository does not exist until you create it and run Phase 00.
+>
+> **Owner decision (2026-11-12):** All implementation commits go on `main`. Do not create `phase/*` branches. This supersedes the branch instructions in A5 and in the phase prompts below. Still implement only the requested phase, then stop. After every prompt, update `README.md` as `.cursor/rules/main-and-readme.mdc` requires. The historical prompt text stays unchanged.
 
 ---
 

@@ -22,7 +22,7 @@ export default async function SignInPage({
     <main className="mx-auto w-full max-w-md flex-1 px-4 py-8">
       <h1 className="text-2xl font-medium tracking-tight text-ink">Sign in</h1>
       <p className="mt-2 text-sm text-muted">
-        The calendar fixtures stay on this device. Signing in does not upload them.
+        Signing in saves tasks, events, notes, and reminders to your account.
       </p>
       {notice ? (
         <p className="mt-4 text-sm text-ink" role="status">

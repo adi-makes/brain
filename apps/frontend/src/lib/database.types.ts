@@ -153,8 +153,11 @@ export type Database = {
         Row: {
           created_at: string;
           dismissed_at: string | null;
+          current_eligibility: string;
           eligibility_signature: string;
+          last_reconciled_at: string | null;
           owner_id: string;
+          pinned_at: string | null;
           restored_at: string | null;
           updated_at: string;
           version: number;
@@ -163,9 +166,12 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           created_at?: string;
+          current_eligibility?: string;
           dismissed_at?: string | null;
           eligibility_signature?: string;
+          last_reconciled_at?: string | null;
           owner_id: string;
+          pinned_at?: string | null;
           restored_at?: string | null;
           updated_at?: string;
           version?: number;
@@ -173,9 +179,12 @@ export type Database = {
         };
         Update: {
           created_at?: string;
+          current_eligibility?: string;
           dismissed_at?: string | null;
           eligibility_signature?: string;
+          last_reconciled_at?: string | null;
           owner_id?: string;
+          pinned_at?: string | null;
           restored_at?: string | null;
           updated_at?: string;
           version?: number;
@@ -1279,6 +1288,30 @@ export type Database = {
           p_title: string;
           p_work_item_id: string;
         };
+        Returns: Json;
+      };
+      dismiss_work_surface: {
+        Args: { p_expected_version: number; p_id: string; p_idempotency_key: string };
+        Returns: Json;
+      };
+      list_work_projections: {
+        Args: { p_as_of: string };
+        Returns: Json;
+      };
+      pin_work_surface: {
+        Args: { p_expected_version: number; p_id: string; p_idempotency_key: string };
+        Returns: Json;
+      };
+      reconcile_auto_surface: {
+        Args: { p_as_of: string };
+        Returns: number;
+      };
+      restore_work_surface: {
+        Args: { p_expected_version: number; p_id: string; p_idempotency_key: string };
+        Returns: Json;
+      };
+      unpin_work_surface: {
+        Args: { p_expected_version: number; p_id: string; p_idempotency_key: string };
         Returns: Json;
       };
       update_work_item: {

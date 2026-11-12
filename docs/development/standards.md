@@ -8,6 +8,6 @@
 - Do not add fake buttons, mock success, or product screens in a phase that does not call for them.
 - Prefer maintained libraries already required by the phase. Do not add UI kits, Redis, Ollama, or Supabase clients ahead of the phase that uses them.
 - Lockfiles are committed. CI installs with frozen lockfiles.
-- Commit on a phase branch. Inspect the diff. Do not commit `.env`, credentials, or build output.
-- Do not force-push or push `main` directly.
+- Commit on `main`. Inspect the diff. Do not commit `.env`, credentials, or build output.
+- Do not force-push or hard-reset. Do not create a `phase/*` branch.
 - Record skipped checks in the phase report. A command that was not run did not pass.

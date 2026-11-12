@@ -5,5 +5,7 @@ alwaysApply: true
 
 Follow AGENTS.md and Part A of docs/prompts/second_brain_cursor_prompt_pack.md.
 Implement only the phase the user requested. Do not start the next phase in the same turn.
+Commit on `main`. Do not create `phase/*` branches. The owner decision in `.cursor/rules/main-and-readme.mdc` supersedes older branch instructions.
+After every prompt, update root `README.md` as that rule requires.
 The only env files are root `.env` and root `.env.example`, plus an approved root `.env.*.example` when a documented need exists.
 Do not log hidden reasoning, tool output, or secrets into prompt_responses.md.

@@ -4,6 +4,14 @@ import urllib.error
 import urllib.request
 
 from second_brain.worker.main import WorkerState, health_body, serve_health
+from second_brain.worker.surface import schedule_status
+
+
+def test_surface_schedule_does_not_calculate_eligibility() -> None:
+    status = schedule_status()
+    assert status["function"] == "public.reconcile_auto_surface_all"
+    assert status["database_connected"] is False
+    assert status["interval_seconds"] == 300
 
 
 def test_health_body_reports_shutdown() -> None:

@@ -23,6 +23,7 @@ export {
   reminderInputSchema,
   reminderUpdateSchema,
   severities,
+  surfaceActionSchema,
   workItemInputSchema,
   workItemStatusSchema,
   workItemUpdateSchema,

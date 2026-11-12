@@ -3,7 +3,7 @@ import { entriesOnDate, toCalendarEntries } from "../calendar/adapter";
 import { addDays, addMonths, monthGrid, startOfWeek, weekDays } from "../calendar/dates";
 import { buildDemoItems } from "../demo/fixtures";
 import type { DemoItem, QuickAddDraft } from "../demo/types";
-import { filterTasks, searchItems, todayTasks, upcomingWork } from "./filters";
+import { filterTasks, searchItems, tasksInSection } from "./filters";
 import { isThemeChoice, resolveTheme } from "./theme";
 import { quickAddIsValid, validateQuickAdd } from "./validation";
 
@@ -87,13 +87,16 @@ describe("quick add", () => {
 describe("filters", () => {
   const items = buildDemoItems(today);
 
-  it("keeps open tasks and sorts upcoming work by date then severity", () => {
+  it("keeps open tasks and reads the server section without deciding eligibility", () => {
     expect(filterTasks(items, "open").every((item) => !item.done)).toBe(true);
     expect(filterTasks(items, "done").every((item) => item.done)).toBe(true);
-    expect(todayTasks(items, today).map((item) => item.id)).toContain("task-note");
-    const upcoming = upcomingWork(items, today);
-    expect(upcoming.every((item) => item.date && item.date > today)).toBe(true);
-    expect(upcoming.some((item) => item.done)).toBe(false);
+    const surfaced = [
+      ...items.map((item) =>
+        item.id === "task-note" ? { ...item, surfaceSection: "today" as const } : item,
+      ),
+    ];
+    expect(tasksInSection(surfaced, "today").map((item) => item.id)).toEqual(["task-note"]);
+    expect(tasksInSection(surfaced, "upcoming")).toEqual([]);
   });
 
   it("searches fixtures and returns nothing for a blank query", () => {

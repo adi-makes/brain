@@ -2,7 +2,14 @@ export type ItemKind = "task" | "event" | "reminder" | "note";
 
 export type Severity = "critical" | "high" | "medium" | "low";
 
-export type PreviewMode = "ready" | "loading" | "error" | "offline" | "empty";
+export type PreviewMode =
+  | "ready"
+  | "loading"
+  | "error"
+  | "offline"
+  | "empty"
+  | "dense"
+  | "overdue";
 
 export type CalendarView = "week" | "day" | "month";
 

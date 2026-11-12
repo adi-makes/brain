@@ -28,6 +28,12 @@ export type WorkspaceRecord = {
   offsetMinutes?: number | null;
   channel?: "in_app" | "email" | "push";
   status?: string;
+  surfaceSection?: "today" | "upcoming" | "todo";
+  surfaceReason?: string;
+  excludedReason?: string;
+  surfaceDismissed?: boolean;
+  surfacePinned?: boolean;
+  surfaceVersion?: number;
 };
 
 export type WorkspaceBundle = {
@@ -39,3 +45,5 @@ export type WorkspaceBundle = {
 
 export type MutationResult =
   { ok: true; record: WorkspaceRecord } | { ok: false; error: string; conflict?: boolean };
+
+export type SurfaceResult = { ok: true } | { ok: false; error: string; conflict?: boolean };

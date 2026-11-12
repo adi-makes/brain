@@ -683,3 +683,111 @@ Branch `phase/03-productivity-core`; commit `feat(core): add secure tasks events
 JOURNAL
 Append exact prompt and exact final response. Report data model, endpoints, UI routes, recurrence scope, tests and limitations. Stop for approval.
 ```
+
+<!-- second-brain-journal-entry -->
+
+## jrn_20261112T114159Z_2f81eec4
+
+- kind: response
+- phase: 03
+- timestamp_utc: 2026-11-12T11:41:59Z
+- conversation_id: 77e3abd1-5c49-44c6-ad72-fc6cdc452d4c
+- generation_id: 05f83f46-c55a-4780-a283-0e3587d52b1a
+- cursor_version: 3.29.15
+- capture_status: HOOK VERIFIED
+- response_status: 
+- pairs_with: jrn_20261112T111343Z_e78d34d8
+- attachment_count: 0
+- text_present: true
+
+```text
+Phase 03 is on `phase/03-productivity-core` and pushed as `3c99024`. It is not merged. Signed-in people can save tasks, events, notes, and reminder definitions. The lists stay empty until you sign in, and the browser no longer keeps a sample set.
+
+## Data model
+
+Work items remain the only task record. Today, Upcoming, and To-Do filter that record. They are not tables. The new migration is `supabase/migrations/20261112180000_productivity.sql`. It adds `events.location`, a stored note search vector, `recurrence_series.materialized_through`, and idempotency response columns. Occurrence identity is unique on `(owner_id, series_id, occurrence_on)`, including soft-deleted rows.
+
+Soft-deleted rows stay in the database and are left out of every list. `restore_work_item` exists. The screen has no restore control.
+
+## Writes
+
+Next.js server actions call Postgres functions with the signed-in session. The function sets the owner from `auth.uid()`. A stale `version` raises `P0002` and does not write. The same idempotency key and arguments return the original row. The same key with different arguments raises `P0003`.
+
+| Function | Role |
+| --- | --- |
+| `create_work_item`, `update_work_item`, `set_work_item_status`, `soft_delete_work_item`, `restore_work_item` | Tasks |
+| `create_event`, `update_event`, `soft_delete_event` | Events and series. Scope is `one`, `following`, or `all`. |
+| `create_note`, `update_note`, `soft_delete_note` | Notes |
+| `create_reminder`, `update_reminder`, `soft_delete_reminder` | Reminder definitions only |
+| `list_work_items`, `list_events_between`, `list_notes`, `list_reminders` | Pages and range queries |
+
+FastAPI is not this API. Reminder delivery, planning, undo, and offline sync are not in this phase.
+
+## Recurrence
+
+A series stores frequency, interval, an IANA timezone, the anchor date, and either an end date, a count, or neither. With neither, generation stops 18 months out. Dates are counted from the anchor, so 31 January monthly lands on 28 February and then 31 March. Each occurrence is one event row. Local 09:00 stays 09:00 across the March daylight-saving change. The UTC offset changes.
+
+`one` changes that event and records an override. `following` moves that occurrence and later ones onto a new series, keeps their event ids and dates, and ends the old series the day before. `all` updates the template and every occurrence that is not already an override.
+
+Quick add can save a single event, or a daily or weekly series of eight. Monthly, yearly, an end date, and a custom count are in `create_event` and covered by the database tests. The form does not expose them. Frequency cannot be changed after creation. A series occurrence cannot be moved to a different date. A timed event that crosses midnight is rejected.
+
+## Screens
+
+`/` loads the signed-in records. Quick add validates, then saves. The calendar still has day, week, and month, keyboard movement, and the selected day. Timed events can be dragged in 15-minute steps. That drag saves with scope `one`. The edit dialog is the other way to change or delete a record, including the series scope. Mark done updates the task and rolls back if the save fails. Search looks through saved records. The assistant control says it is unavailable and does not send anything.
+
+## Tests that ran
+
+| Check | Result |
+| --- | --- |
+| `pnpm db:test` | 42 passed. 27 productivity tests plus the existing 15 isolation tests. Covered version conflicts, idempotent retry, soft delete, pagination, monthly anchoring, the March daylight-saving series, "this and following", a second materialize that does not duplicate rows, anonymous denial, and user B being unable to update A's task or attach a reminder to it. |
+| Schema unit tests | 5 passed |
+| Frontend unit tests | 15 passed, including the wall-time conversion and all-day span |
+| Frontend typecheck and ESLint | Passed |
+| Playwright | 9 passed. Quick add shows "Sign in to save." and does not put the title in the list. |
+
+## Not verified
+
+Playwright did not sign in, so it did not click through a real create, edit, or drag against the database. Those paths were executed in Postgres, not in the browser. No hosted project was updated. If you already linked one, apply the new migration with `pnpm exec supabase db push`. If you have not created the project yet, the setup in the README still applies, and `db push` will apply both migrations.
+
+I am stopped here for your approval. I have not opened a pull request and I have not started Phase 04.
+```
+
+<!-- second-brain-journal-entry -->
+
+## jrn_20261112T114713Z_55ac7df2
+
+- kind: prompt
+- phase: unknown
+- timestamp_utc: 2026-11-12T11:47:13Z
+- conversation_id: 77e3abd1-5c49-44c6-ad72-fc6cdc452d4c
+- generation_id: 4b07931b-10b1-47f1-8b3a-4f31fb76ab8e
+- cursor_version: 3.29.15
+- capture_status: HOOK VERIFIED
+- response_status: PENDING
+- pairs_with: 
+- attachment_count: 2
+- text_present: true
+
+```text
+Execute the selected diff-tab commit-and-push action.
+```
+
+<!-- second-brain-journal-entry -->
+
+## jrn_20261112T121622Z_b879c5f0
+
+- kind: prompt
+- phase: unknown
+- timestamp_utc: 2026-11-12T12:16:22Z
+- conversation_id: a142b468-8ffa-4cc7-a2b0-6eeaa310f21e
+- generation_id: 26938d8e-0a1c-41b3-9a5f-e11868852692
+- cursor_version: 3.29.15
+- capture_status: HOOK VERIFIED
+- response_status: PENDING
+- pairs_with: 
+- attachment_count: 2
+- text_present: true
+
+```text
+\no need to workon multiple branches, everythign exists on main, merge and commit everything to maina dnfrom now on all work happens on main. updarte anyu fiels as needed. also the readme needs to updated reagualy, men5tioning what all featrures are available and also how to access thingfs etc. wwrite it downinsioemwhere and strcitl;y follow it aafter executing each prompt
+```

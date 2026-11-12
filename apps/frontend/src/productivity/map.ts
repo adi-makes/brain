@@ -41,6 +41,17 @@ export function mapWorkItem(value: unknown, timeZone: string): WorkspaceRecord |
     category: (item.category as WorkspaceRecord["category"]) ?? "personal",
     version: versionOf(item.version),
     status: text(item.status),
+    surfaceSection:
+      item.surface_section === "today" ||
+      item.surface_section === "upcoming" ||
+      item.surface_section === "todo"
+        ? item.surface_section
+        : undefined,
+    surfaceReason: typeof item.surface_reason === "string" ? item.surface_reason : undefined,
+    excludedReason: typeof item.excluded_reason === "string" ? item.excluded_reason : undefined,
+    surfaceDismissed: item.surface_dismissed === true,
+    surfacePinned: item.surface_pinned === true,
+    surfaceVersion: typeof item.surface_version === "number" ? item.surface_version : undefined,
   };
 }
 

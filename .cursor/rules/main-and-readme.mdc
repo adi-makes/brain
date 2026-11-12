@@ -1,0 +1,25 @@
+---
+description: Commit on main and refresh the README after every prompt
+alwaysApply: true
+---
+
+# Main branch and README
+
+Owner decision, 2026-11-12. This supersedes phase-branch instructions in Part A5 and in any phase prompt.
+
+- Check out `main` before editing. Commit there. Do not create `phase/*` branches.
+- Still implement only the phase the user requested. Stop before the next phase.
+- Do not force-push or hard-reset. Push `main` when the prompt or the owner asks to push.
+- Before every commit, inspect `git status` and the diff, then run `pnpm check:env-layout` and `pnpm check:secrets`.
+
+## README after every prompt
+
+Before the turn ends, update root `README.md` so a new reader can tell what works and how to open it.
+
+- In **Features**, list what a person can do today. Name the route or control: `/`, Add, Search, Day/Week/Month, Settings, Sign in.
+- Say what is visible but not working, including the assistant control and reminder delivery.
+- If this prompt changed behavior, routes, setup, or commands, change those sections in the same turn.
+- If nothing user-facing changed, leave the feature list as it is and do not add a changelog entry.
+- Do not describe a feature the code does not implement.
+
+Example: a new `/search` page replaces "Search opens a dialog on `/`" in the same commit as the page.

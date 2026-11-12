@@ -8,7 +8,7 @@ Second Brain is a personal productivity workspace centered on a useful calendar.
 - Implement only the phase the user requested. Do not start the next phase in the same turn.
 - Preserve existing user work. If a requested change would overwrite it, stop and report the conflict.
 - Do not claim a command, test, browser check, or screenshot review succeeded unless it actually ran. Record what was skipped and why.
-- End every phase with an engineering report. Wait for the owner to approve before merging to `main` or beginning the next phase.
+- End every phase with an engineering report. Stop before the next phase. Commit the phase on `main`.
 
 ## Layout
 
@@ -57,12 +57,12 @@ Second Brain is a personal productivity workspace centered on a useful calendar.
 
 ## GitHub
 
-- Work on `phase/<nn>-<name>`.
+- Commit on `main`. Do not create `phase/*` branches.
 - Use Conventional Commits.
 - Stage explicit paths. Inspect `git status` and the diff before committing.
-- Do not force-push, hard-reset, or push `main`.
-- Push the phase branch when `origin` exists and authentication works.
-- Recommend branch protection on `main` that requires the CI checks.
+- Do not force-push or hard-reset.
+- Push `main` when the owner or the current prompt asks for a push and `origin` authentication works.
+- Keep the CI checks. Update root `README.md` before the turn ends, as `.cursor/rules/main-and-readme.mdc` requires.
 
 ## Commands
 

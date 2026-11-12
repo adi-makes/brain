@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { formatLong } from "../calendar/dates";
 import type { Severity, TaskFilter } from "../demo/types";
 import type { WorkspaceRecord } from "../productivity/types";
-import { filterTasks, todayTasks, upcomingWork } from "../workspace/filters";
+import { filterTasks, tasksInSection } from "../workspace/filters";
 import { useWorkspace } from "../workspace/store";
 
 const FILTERS: { id: TaskFilter; label: string }[] = [
@@ -58,7 +58,6 @@ function EmptyLine({ children }: { children: string }) {
 
 export function WorkRail() {
   const {
-    today,
     items,
     filter,
     setFilter,
@@ -66,9 +65,11 @@ export function WorkRail() {
     pendingTaskId,
     mutationsPaused,
     setEditing,
+    restoreSurface,
+    pinSurface,
   } = useWorkspace();
-  const todayList = todayTasks(items, today);
-  const upcoming = upcomingWork(items, today);
+  const todayList = tasksInSection(items, "today");
+  const upcoming = tasksInSection(items, "upcoming");
   const todos = filterTasks(items, filter);
   const reminders = items.filter((item) => item.kind === "reminder");
 
@@ -76,30 +77,22 @@ export function WorkRail() {
     <aside className="bg-surface lg:min-h-0 lg:w-[22rem] lg:shrink-0 lg:overflow-auto">
       <Section id="today" title="Today">
         {todayList.length === 0 ? (
-          <EmptyLine>Nothing due today.</EmptyLine>
+          <EmptyLine>Nothing is surfaced for today.</EmptyLine>
         ) : (
-          <ItemList items={todayList} />
+          <ul className="space-y-3">
+            {todayList.map((item) => (
+              <TaskRow key={item.id} item={item} />
+            ))}
+          </ul>
         )}
       </Section>
       <Section id="upcoming" title="Upcoming work">
         {upcoming.length === 0 ? (
-          <EmptyLine>No open work with a future due date.</EmptyLine>
+          <EmptyLine>Nothing is due soon.</EmptyLine>
         ) : (
           <ul className="space-y-3">
             {upcoming.map((item) => (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  onClick={() => setEditing(item)}
-                  className="min-h-11 text-left text-sm text-ink"
-                >
-                  {item.title}
-                </button>
-                <p className="mt-1 flex flex-wrap gap-2 text-xs text-muted">
-                  <span>{item.date ? formatLong(item.date) : "No date"}</span>
-                  <Mark severity={item.severity} />
-                </p>
-              </li>
+              <TaskRow key={item.id} item={item} />
             ))}
           </ul>
         )}
@@ -135,18 +128,46 @@ export function WorkRail() {
                 >
                   {pendingTaskId === item.id ? "Saving…" : item.done ? "Mark open" : "Mark done"}
                 </button>
-                <div>
+                <div className="min-w-0">
                   <button
                     type="button"
                     onClick={() => setEditing(item)}
                     className={`min-h-11 text-left text-sm ${item.done ? "text-muted line-through" : "text-ink"}`}
                   >
                     {item.title}
+                    <span className="sr-only">Work item {item.id}</span>
                   </button>
                   <p className="text-xs text-muted">
                     {item.date ? formatLong(item.date) : "No date"}
+                    {item.excludedReason ? ` · ${item.excludedReason}` : ""}
+                    {item.surfaceReason && item.surfaceSection !== "todo"
+                      ? ` · ${item.surfaceReason}`
+                      : ""}
                     {pendingTaskId === item.id ? " · Saving…" : ""}
                   </p>
+                  <div className="flex flex-wrap gap-1">
+                    {item.surfaceDismissed ? (
+                      <button
+                        type="button"
+                        onClick={() => restoreSurface(item.id)}
+                        className="cursor-pointer min-h-11 rounded-[10px] px-2 text-xs text-ink"
+                      >
+                        Restore {item.title}
+                      </button>
+                    ) : null}
+                    {!item.done &&
+                    !item.surfaceDismissed &&
+                    !item.surfacePinned &&
+                    item.surfaceSection !== "today" ? (
+                      <button
+                        type="button"
+                        onClick={() => pinSurface(item.id)}
+                        className="cursor-pointer min-h-11 rounded-[10px] px-2 text-xs text-ink"
+                      >
+                        Pin {item.title}
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               </li>
             ))}
@@ -201,21 +222,41 @@ export function WorkRail() {
   );
 }
 
-function ItemList({ items }: { items: WorkspaceRecord[] }) {
-  const { setEditing } = useWorkspace();
+function TaskRow({ item }: { item: WorkspaceRecord }) {
+  const { setEditing, dismissSurface, unpinSurface } = useWorkspace();
   return (
-    <ul className="space-y-2">
-      {items.map((item) => (
-        <li key={item.id}>
+    <li>
+      <button
+        type="button"
+        onClick={() => setEditing(item)}
+        className="min-h-11 text-left text-sm text-ink"
+      >
+        {item.title}
+        <span className="sr-only">Work item {item.id}</span>
+      </button>
+      <p className="mt-1 flex flex-wrap gap-2 text-xs text-muted">
+        <span>{item.date ? formatLong(item.date) : "No date"}</span>
+        <Mark severity={item.severity} />
+        {item.surfaceReason ? <span>{item.surfaceReason}</span> : null}
+      </p>
+      <div className="flex flex-wrap gap-1">
+        <button
+          type="button"
+          onClick={() => dismissSurface(item.id)}
+          className="cursor-pointer min-h-11 rounded-[10px] px-2 text-xs text-ink"
+        >
+          Dismiss {item.title}
+        </button>
+        {item.surfacePinned ? (
           <button
             type="button"
-            onClick={() => setEditing(item)}
-            className="min-h-11 text-left text-sm text-ink"
+            onClick={() => unpinSurface(item.id)}
+            className="cursor-pointer min-h-11 rounded-[10px] px-2 text-xs text-ink"
           >
-            {item.title}
+            Unpin {item.title}
           </button>
-        </li>
-      ))}
-    </ul>
+        ) : null}
+      </div>
+    </li>
   );
 }

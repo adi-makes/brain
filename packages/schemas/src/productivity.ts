@@ -33,6 +33,12 @@ export const workItemUpdateSchema = workItemInputSchema.and(
   }),
 );
 
+export const surfaceActionSchema = z.object({
+  id: z.string().uuid(),
+  expectedVersion: z.number().int().nonnegative(),
+  idempotencyKey: key,
+});
+
 export const workItemStatusSchema = z.object({
   id: z.string().uuid(),
   expectedVersion: z.number().int().positive(),

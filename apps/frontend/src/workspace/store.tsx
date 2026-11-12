@@ -16,7 +16,11 @@ import {
   createNote,
   createReminder,
   createWorkItem,
+  dismissWorkSurface,
+  pinWorkSurface,
+  restoreWorkSurface,
   setWorkItemStatus,
+  unpinWorkSurface,
   updateEvent,
 } from "../productivity/actions";
 import type { MutationResult, WorkspaceBundle, WorkspaceRecord } from "../productivity/types";
@@ -30,6 +34,7 @@ import type {
   ThemeChoice,
   WeekStart,
 } from "../demo/types";
+import { densePreview, overduePreview, previewBaseline } from "./surface-preview";
 import {
   DENSITY_KEY,
   NAME_KEY,
@@ -76,6 +81,10 @@ type WorkspaceContextValue = {
   editing: WorkspaceRecord | null;
   setEditing: (record: WorkspaceRecord | null) => void;
   toggleTask: (id: string) => void;
+  dismissSurface: (id: string) => void;
+  restoreSurface: (id: string) => void;
+  pinSurface: (id: string) => void;
+  unpinSurface: (id: string) => void;
   saveQuickAdd: (draft: QuickAddDraft, idempotencyKey: string) => Promise<MutationResult>;
   moveEvent: (id: string, startMinutes: number) => void;
   applyRecord: (record: WorkspaceRecord) => void;
@@ -116,6 +125,10 @@ export function WorkspaceProvider({
   const [ready, setReady] = useState(false);
   const [notice, setNotice] = useState(initial.message ?? "");
   const [editing, setEditing] = useState<WorkspaceRecord | null>(null);
+  const [previewEdits, setPreviewEdits] = useState<{
+    mode: PreviewMode;
+    items: WorkspaceRecord[];
+  } | null>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -133,6 +146,13 @@ export function WorkspaceProvider({
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
+
+  const denseItems = useMemo(() => densePreview(), []);
+  const overdueItems = useMemo(() => overduePreview(), []);
+  const basePreview =
+    preview === "dense" ? denseItems : preview === "overdue" ? overdueItems : null;
+  const previewItems =
+    previewEdits && previewEdits.mode === preview ? previewEdits.items : basePreview;
 
   useEffect(() => {
     if (!ready) return;
@@ -219,14 +239,89 @@ export function WorkspaceProvider({
           setItems(previous);
           setNotice(result.error);
         } else {
-          applyRecord(result.record);
+          void reloadRecords();
           setNotice("");
         }
         setPendingTaskId(null);
       });
     },
-    [applyRecord, initial.status, initial.timeZone, items],
+    [initial.status, initial.timeZone, items, reloadRecords],
   );
+
+  const changeSurface = useCallback(
+    (id: string, action: "dismiss" | "restore" | "pin" | "unpin") => {
+      const source = previewItems ?? items;
+      const current = source.find((item) => item.id === id && item.kind === "task");
+      if (!current) return;
+      if (previewItems) {
+        const next = previewItems.map((item) => {
+          if (item.id !== id) return item;
+          if (action === "restore") return previewBaseline(id) ?? item;
+          if (action === "dismiss") {
+            return {
+              ...item,
+                surfaceSection: "todo" as const,
+                surfaceReason: undefined,
+                excludedReason: "Dismissed",
+              surfaceDismissed: true,
+              surfacePinned: false,
+            };
+          }
+          if (action === "pin") {
+            return {
+              ...item,
+                surfaceSection: "today" as const,
+                surfaceReason: "Manually pinned",
+              excludedReason: undefined,
+              surfaceDismissed: false,
+              surfacePinned: true,
+            };
+          }
+          const baseline = previewBaseline(id);
+          if (baseline && !baseline.surfacePinned) return baseline;
+          return {
+            ...item,
+            surfaceSection: "todo" as const,
+            surfaceReason: undefined,
+            excludedReason: "Low severity does not surface on its own",
+            surfacePinned: false,
+            surfaceDismissed: false,
+          };
+        });
+        setPreviewEdits({ mode: preview, items: next });
+        return;
+      }
+      if (initial.status !== "ready") {
+        setNotice("Sign in to save.");
+        return;
+      }
+      const run =
+        action === "dismiss"
+          ? dismissWorkSurface
+          : action === "restore"
+            ? restoreWorkSurface
+            : action === "pin"
+              ? pinWorkSurface
+              : unpinWorkSurface;
+      void run({
+        id,
+        expectedVersion: current.surfaceVersion ?? 0,
+        idempotencyKey: crypto.randomUUID(),
+      }).then((result) => {
+        if (!result.ok) {
+          setNotice(result.error);
+          return;
+        }
+        void reloadRecords();
+      });
+    },
+    [initial.status, items, preview, previewItems, reloadRecords],
+  );
+
+  const dismissSurface = useCallback((id: string) => changeSurface(id, "dismiss"), [changeSurface]);
+  const restoreSurface = useCallback((id: string) => changeSurface(id, "restore"), [changeSurface]);
+  const pinSurface = useCallback((id: string) => changeSurface(id, "pin"), [changeSurface]);
+  const unpinSurface = useCallback((id: string) => changeSurface(id, "unpin"), [changeSurface]);
 
   const saveQuickAdd = useCallback(
     async (draft: QuickAddDraft, idempotencyKey: string): Promise<MutationResult> => {
@@ -296,8 +391,9 @@ export function WorkspaceProvider({
         setNotice(result.error);
         return result;
       }
-      if (draft.type === "event" && draft.repeat !== "none") await reloadRecords();
-      else applyRecord(result.record);
+      if (draft.type === "task" || (draft.type === "event" && draft.repeat !== "none")) {
+        await reloadRecords();
+      } else applyRecord(result.record);
       setNotice("");
       return result;
     },
@@ -391,7 +487,7 @@ export function WorkspaceProvider({
       setSelectedDate,
       view,
       setView,
-      items: preview === "empty" ? [] : items,
+      items: preview === "empty" ? [] : (previewItems ?? items),
       pendingTaskId,
       filter,
       setFilter,
@@ -422,6 +518,10 @@ export function WorkspaceProvider({
       editing,
       setEditing,
       toggleTask,
+      dismissSurface,
+      restoreSurface,
+      pinSurface,
+      unpinSurface,
       saveQuickAdd,
       moveEvent,
       applyRecord,
@@ -433,6 +533,7 @@ export function WorkspaceProvider({
       selectedDate,
       view,
       items,
+      previewItems,
       pendingTaskId,
       filter,
       preview,
@@ -455,6 +556,10 @@ export function WorkspaceProvider({
       notice,
       editing,
       toggleTask,
+      dismissSurface,
+      restoreSurface,
+      pinSurface,
+      unpinSurface,
       saveQuickAdd,
       moveEvent,
       applyRecord,

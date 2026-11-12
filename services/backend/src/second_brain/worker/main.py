@@ -8,6 +8,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from second_brain.logging import configure_logging
 from second_brain.settings import get_settings
+from second_brain.worker.surface import schedule_status
 
 logger = logging.getLogger("second_brain.worker")
 
@@ -71,6 +72,7 @@ def main() -> None:
     install_signal_handlers(state)
     server = serve_health(state, settings.backend_host, settings.worker_health_port)
     logger.info("worker_starting port=%s", settings.worker_health_port)
+    logger.info("surface_reconciliation %s", schedule_status())
     try:
         state.stop_event.wait()
     finally:

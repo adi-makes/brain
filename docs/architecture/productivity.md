@@ -37,4 +37,4 @@ Frequency and interval do not change after creation. Quick add can create a dail
 
 ## What this phase does not do
 
-Reminder delivery, planning blocks, effort logs, auto-surface dismissal, undo, offline sync, and assistant writes are later phases. The operation journal is not filled in by these functions. A timed event that crosses midnight is rejected. Dragging a timed event moves it in 15-minute steps and saves with scope `one`. The edit form is the other way to change it.
+Reminder delivery, planning blocks, effort logs, undo, offline sync, and assistant writes are later phases. Auto-surface dismissal is in `docs/architecture/surfacing.md`. A timed event that crosses midnight is rejected. Dragging a timed event moves it in 15-minute steps and saves with scope `one`. The edit form is the other way to change it. Task writes and the scheduled reconciliation call `reconcile_work_item_surface`. That writes `current_eligibility` only.

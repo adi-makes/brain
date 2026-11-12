@@ -85,12 +85,29 @@ pnpm dev:worker     # http://127.0.0.1:8001/health
 
 These scripts load the root `.env`. There is no env file inside `apps/` or `services/`.
 
-Routes:
+## Features
 
-- `/` tasks, events, notes, reminders, and the calendar. Saving requires a signed-in session.
-- `/settings` local theme and display preferences
-- `/sign-in` and `/sign-up`
-- `/account` requires a session when Supabase is configured
+Run `pnpm dev:frontend` and open `http://127.0.0.1:3000`. Saving requires a signed-in account and `pnpm exec supabase db push`. Until then the lists stay empty. The Workspace state menu can show Empty, Dense, and Overdue previews. Those previews are not saved.
+
+| What                                 | How to open it                                                                                                                                    |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Calendar day, week, and month        | `/`. Day, Week, and Month. Arrow keys move the selected day.                                                                                      |
+| Today, Upcoming work, and To-Do      | The list on `/`. On a phone, Today is in the bottom bar.                                                                                          |
+| Why a task is in a section           | The row says Due today, Overdue, Due soon, or Manually pinned. To-Do says why something is left out, such as Dismissed or No due date.            |
+| Add a task, event, note, or reminder | Add. A task needs a due date and Critical, High, or Medium severity before it appears on Today or Upcoming. Low stays on To-Do unless you pin it. |
+| Search saved records                 | Search, or Ctrl+K / Cmd+K.                                                                                                                        |
+| Change or delete a record            | Select its title. Events can apply to this one, this and following, or the whole series.                                                          |
+| Dismiss, restore, or pin a task      | Dismiss on Today or Upcoming. Restore and Pin are on the To-Do row.                                                                               |
+| Mark a task done                     | Mark done on the To-Do row.                                                                                                                       |
+| Drag a timed event                   | On the day or week calendar, in 15-minute steps.                                                                                                  |
+| Settings                             | Settings, or `/settings`. Theme and display stay in this browser.                                                                                 |
+| Sign in, sign up, account            | Sign in, `/sign-in`, `/sign-up`, and `/account`.                                                                                                  |
+| Assistant                            | Assistant. It does not send anything.                                                                                                             |
+| Reminder definitions                 | The Reminders section. Nothing is delivered.                                                                                                      |
+
+Critical work appears 7 days before it is due, High 3 days, Medium 1 day, and Low never, using the timezone on the profile. Overdue open work in those three severities stays on Today until you dismiss it, finish it, or cancel it. Reconciliation does not bring a dismissed task back. The rules are in `docs/architecture/surfacing.md`.
+
+Not built yet: reminder delivery, the planner, assistant proposals, offline sync, and a restore control for a soft-deleted task. `restore_work_item` exists in the database. The screen does not call it.
 
 ## Checks
 
@@ -149,15 +166,16 @@ Compose starts the frontend, API, and worker. It does not start Supabase, Redis,
 
 ## Git
 
-Work on `phase/02-supabase-auth`. Do not push `main` and do not force-push.
+Commit on `main`. Do not open a `phase/*` branch. Do not force-push.
 
-Protect `main` so it requires a pull request and the JavaScript, Python, and secret-scan checks. Enable GitHub secret scanning and push protection.
+Keep the JavaScript, Python, and secret-scan checks. Enable GitHub secret scanning and push protection.
 
 ## Documentation
 
 - `AGENTS.md` — agent rules
 - `docs/architecture/overview.md`
 - `docs/architecture/schema.md` — canonical tables and delete behavior
+- `docs/architecture/surfacing.md` — Today, Upcoming, and To-Do
 - `docs/operations/supabase.md` — project setup and `db push`
 - `docs/operations/security.md` — cookies, CORS, rate limits
 - `docs/decisions/` — monorepo, hosted Supabase, worker, planner

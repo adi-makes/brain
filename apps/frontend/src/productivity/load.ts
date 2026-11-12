@@ -19,11 +19,8 @@ export async function loadWorkspace(): Promise<WorkspaceBundle> {
   const timeZone = profile.data?.timezone || "UTC";
   const today = zonedDate(new Date(), timeZone);
   const [work, events, notes, reminders] = await Promise.all([
-    supabase.rpc("list_work_items", {
-      p_limit: 100,
-      p_cursor_created: null as unknown as string,
-      p_cursor_id: null as unknown as string,
-      p_status: null as unknown as string,
+    supabase.rpc("list_work_projections", {
+      p_as_of: new Date().toISOString(),
     }),
     supabase.rpc("list_events_between", {
       p_start: addDays(today, -45),

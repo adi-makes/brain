@@ -59,7 +59,7 @@ function RecordForm({ record, onClose }: { record: WorkspaceRecord; onClose: () 
         return;
       }
       key.current = crypto.randomUUID();
-      if (record.kind === "event" && record.seriesId && scope !== "one") {
+      if (record.kind === "task" || (record.kind === "event" && record.seriesId && scope !== "one")) {
         void reloadRecords();
       } else {
         applyRecord(result.record);

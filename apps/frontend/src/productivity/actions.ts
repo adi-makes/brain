@@ -2,6 +2,7 @@
 
 import {
   eventInputSchema,
+  surfaceActionSchema,
   eventUpdateSchema,
   noteInputSchema,
   noteUpdateSchema,
@@ -15,7 +16,7 @@ import { headers } from "next/headers";
 import type { Database } from "../lib/database.types";
 import { createServerSupabase } from "../lib/supabase/server";
 import { recordFromMutation } from "./map";
-import type { MutationResult } from "./types";
+import type { MutationResult, SurfaceResult } from "./types";
 
 type RpcName = keyof Database["public"]["Functions"];
 
@@ -300,6 +301,64 @@ export async function updateReminder(input: unknown, timeZone: string): Promise<
     },
     timeZone,
   );
+}
+
+async function callSurface(name: RpcName, args: Record<string, unknown>): Promise<SurfaceResult> {
+  if (!(await sameOrigin()))
+    return { ok: false, error: "The request did not come from this site." };
+  const supabase = await createServerSupabase();
+  if (!supabase) return { ok: false, error: "Sign in to save." };
+  const { data: user } = await supabase.auth.getUser();
+  if (!user.user) return { ok: false, error: "Sign in to save." };
+  const { error } = await supabase.rpc(
+    name,
+    args as Database["public"]["Functions"][typeof name]["Args"],
+  );
+  if (error) {
+    const result = failed(error);
+    if (!result.ok) return { ok: false, error: result.error, conflict: result.conflict };
+  }
+  return { ok: true };
+}
+
+export async function dismissWorkSurface(input: unknown): Promise<SurfaceResult> {
+  const parsed = surfaceActionSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Check the fields and try again." };
+  return callSurface("dismiss_work_surface", {
+    p_id: parsed.data.id,
+    p_expected_version: parsed.data.expectedVersion,
+    p_idempotency_key: parsed.data.idempotencyKey,
+  });
+}
+
+export async function restoreWorkSurface(input: unknown): Promise<SurfaceResult> {
+  const parsed = surfaceActionSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Check the fields and try again." };
+  return callSurface("restore_work_surface", {
+    p_id: parsed.data.id,
+    p_expected_version: parsed.data.expectedVersion,
+    p_idempotency_key: parsed.data.idempotencyKey,
+  });
+}
+
+export async function pinWorkSurface(input: unknown): Promise<SurfaceResult> {
+  const parsed = surfaceActionSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Check the fields and try again." };
+  return callSurface("pin_work_surface", {
+    p_id: parsed.data.id,
+    p_expected_version: parsed.data.expectedVersion,
+    p_idempotency_key: parsed.data.idempotencyKey,
+  });
+}
+
+export async function unpinWorkSurface(input: unknown): Promise<SurfaceResult> {
+  const parsed = surfaceActionSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Check the fields and try again." };
+  return callSurface("unpin_work_surface", {
+    p_id: parsed.data.id,
+    p_expected_version: parsed.data.expectedVersion,
+    p_idempotency_key: parsed.data.idempotencyKey,
+  });
 }
 
 export async function deleteReminder(

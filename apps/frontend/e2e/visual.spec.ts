@@ -47,16 +47,16 @@ test.describe("visual capture", () => {
           });
           await page.keyboard.press("Escape");
           await page.getByRole("button", { name: "Assistant" }).click();
-          await expect(page.getByRole("heading", { name: "Assistant · demo" })).toBeVisible();
+          await expect(page.getByRole("heading", { name: "Assistant", exact: true })).toBeVisible();
           await page.screenshot({
             path: `../../artifacts/screenshots/01-design-system/${viewport.name}-${theme}-assistant.png`,
           });
           await page.getByRole("button", { name: "Close" }).click();
-          await page.getByLabel("Fixture preview").selectOption("empty");
+          await page.getByLabel("Workspace state").selectOption("empty");
           await page.screenshot({
             path: `../../artifacts/screenshots/01-design-system/${viewport.name}-${theme}-empty.png`,
           });
-          await page.getByLabel("Fixture preview").selectOption("error");
+          await page.getByLabel("Workspace state").selectOption("error");
           await page.screenshot({
             path: `../../artifacts/screenshots/01-design-system/${viewport.name}-${theme}-error.png`,
           });
@@ -68,6 +68,35 @@ test.describe("visual capture", () => {
         }
         expect(consoleErrors).toEqual([]);
       });
+    }
+  }
+});
+
+test.describe("auto surface panels", () => {
+  test.skip(process.env.VISUAL !== "1", "Set VISUAL=1 to capture screenshots.");
+
+  for (const viewport of widths) {
+    for (const theme of ["light", "dark"] as const) {
+      for (const state of ["empty", "dense", "overdue"] as const) {
+        test(`${viewport.name} ${theme} ${state}`, async ({ page }) => {
+          await page.setViewportSize({ width: viewport.width, height: viewport.height });
+          await page.addInitScript((choice) => {
+            window.localStorage.setItem("second-brain-theme", choice);
+          }, theme);
+          await page.goto("/");
+          await expect(page.locator("html")).toHaveAttribute("data-hydrated", "true");
+          await page.getByLabel("Workspace state").selectOption(state);
+          await expect(page.locator("#today")).toBeVisible();
+          const overflows = await page.evaluate(
+            () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+          );
+          expect(overflows).toBe(false);
+          await page.screenshot({
+            path: `../../artifacts/screenshots/04-auto-surface/${viewport.name}-${theme}-${state}.png`,
+            fullPage: false,
+          });
+        });
+      }
     }
   }
 });

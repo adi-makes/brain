@@ -27,6 +27,8 @@ const PREVIEWS: { id: PreviewMode; label: string }[] = [
   { id: "error", label: "Error" },
   { id: "offline", label: "Offline preview" },
   { id: "empty", label: "Empty" },
+  { id: "dense", label: "Dense preview" },
+  { id: "overdue", label: "Overdue preview" },
 ];
 
 export function WorkspaceShell({ children, auth }: { children: ReactNode; auth: AuthView }) {
@@ -259,6 +261,13 @@ function PreviewNote() {
       <p role="status" className="border-b border-line bg-accent-soft px-3 py-2 text-sm text-ink">
         Offline preview. The browser is still online. Changes are paused so this state does not look
         saved.
+      </p>
+    );
+  }
+  if (preview === "dense" || preview === "overdue") {
+    return (
+      <p role="status" className="border-b border-line bg-accent-soft px-3 py-2 text-sm text-ink">
+        Preview. Nothing is saved.
       </p>
     );
   }
