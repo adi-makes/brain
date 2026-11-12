@@ -1,0 +1,24 @@
+name: Playwright
+
+# Configured for later phases. This workflow does not run on pull requests until
+# browser specs exist. It is not marked continue-on-error.
+on:
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    name: Playwright
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @second-brain/frontend exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+        env:
+          CI: "true"
+          NEXT_PUBLIC_APP_NAME: ${{ vars.NEXT_PUBLIC_APP_NAME || 'Second Brain' }}

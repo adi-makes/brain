@@ -1,0 +1,6 @@
+{
+  "name": "@second-brain/planner-contracts",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Documentation-only planner contract package. No scheduling implementation."
+}

@@ -1,0 +1,6 @@
+# Unused until Phase 11. compose.yaml does not start Caddy.
+# Production ingress, TLS, and hosting are chosen with the repository owner later.
+
+:80 {
+	respond "Second Brain ingress is not configured." 404
+}

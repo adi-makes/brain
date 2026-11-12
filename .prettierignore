@@ -1,0 +1,12 @@
+node_modules
+.pnpm-store
+.next
+dist
+coverage
+pnpm-lock.yaml
+uv.lock
+prompt_responses.md
+docs/prompts
+services/backend/.venv
+artifacts
+supabase/.temp

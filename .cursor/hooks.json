@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeSubmitPrompt": [
+      {
+        "command": ".cursor/hooks/journal_event.py",
+        "timeout": 15,
+        "failClosed": false
+      }
+    ],
+    "afterAgentResponse": [
+      {
+        "command": ".cursor/hooks/journal_event.py",
+        "timeout": 15,
+        "failClosed": false
+      }
+    ]
+  }
+}

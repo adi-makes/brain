@@ -1,0 +1,16 @@
+title = "second-brain"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Journal unit tests construct credential-shaped strings. The prompt pack discusses secret handling and does not contain live credentials."
+paths = [
+  '''scripts/tests/''',
+  '''docs/prompts/second_brain_cursor_prompt_pack\.md''',
+  '''(^|/)\.next/''',
+  '''(^|/)node_modules/''',
+  '''(^|/)\.venv/''',
+  '''(^|/)\.turbo/''',
+  '''(^|/)__pycache__/''',
+]

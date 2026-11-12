@@ -1,0 +1,9 @@
+---
+description: Phase gates, env files, and journal rules for Second Brain
+alwaysApply: true
+---
+
+Follow AGENTS.md and Part A of docs/prompts/second_brain_cursor_prompt_pack.md.
+Implement only the phase the user requested. Do not start the next phase in the same turn.
+The only env files are root `.env` and root `.env.example`, plus an approved root `.env.*.example` when a documented need exists.
+Do not log hidden reasoning, tool output, or secrets into prompt_responses.md.

@@ -1,0 +1,34 @@
+# Local secrets. Root .env.example is tracked.
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# JavaScript
+node_modules/
+.pnpm-store/
+.turbo/
+.next/
+dist/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.pyc
+
+# Journal lock and local logs
+prompt_responses.md.lock
+artifacts/logs/*
+!artifacts/logs/.gitkeep
+
+# Local Supabase CLI scratch
+supabase/.temp/
+supabase/.branches/
+
+.DS_Store

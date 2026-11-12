@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
+# When invoked from .git/hooks, dirname is .git/hooks and ../.. is the repo root.
+# When invoked from .githooks, dirname is .githooks and ../.. is the parent of the repo.
+if [ ! -f "$root/scripts/verify-commit-safety.sh" ]; then
+  root=$(git rev-parse --show-toplevel)
+fi
+cd "$root"
+sh scripts/verify-commit-safety.sh

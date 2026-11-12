@@ -1,0 +1,5 @@
+# Phase 00 stub. Hosted Supabase is the database, auth, realtime, and storage
+# provider. Compose does not start a Supabase stack. Phase 02 replaces this
+# file with the CLI-managed configuration for migrations and local tests.
+
+project_id = "second-brain"

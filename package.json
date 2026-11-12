@@ -1,0 +1,38 @@
+{
+  "name": "second-brain",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "pnpm@10.34.9",
+  "engines": {
+    "node": ">=26 <27"
+  },
+  "scripts": {
+    "dev": "node scripts/with-root-env.mjs pnpm exec turbo dev",
+    "dev:frontend": "node scripts/with-root-env.mjs pnpm --filter @second-brain/frontend dev",
+    "dev:api": "node scripts/with-root-env.mjs uv run --project services/backend python -m second_brain.api",
+    "dev:worker": "node scripts/with-root-env.mjs uv run --project services/backend python -m second_brain.worker",
+    "lint": "pnpm exec turbo lint && pnpm exec prettier --check .",
+    "format": "pnpm exec prettier --write .",
+    "typecheck": "pnpm exec turbo typecheck",
+    "test": "pnpm exec turbo test && node --test scripts/check-env-layout.test.mjs && python3 -m unittest discover -s scripts/tests -v",
+    "build": "node scripts/with-root-env.mjs pnpm exec turbo build",
+    "check:env-layout": "node scripts/check-env-layout.mjs",
+    "check:prompt-journal": "python3 scripts/verify-prompt-journal.py",
+    "check:secrets": "python3 scripts/scan-secrets.py",
+    "test:e2e": "pnpm --filter @second-brain/frontend test:e2e",
+    "compose:config": "node scripts/with-root-env.mjs docker compose config",
+    "compose:up": "node scripts/with-root-env.mjs docker compose up --build",
+    "compose:down": "node scripts/with-root-env.mjs docker compose down"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "turbo": "^2.6.1"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "unrs-resolver"
+    ]
+  }
+}
