@@ -7,7 +7,7 @@ export function validateQuickAdd(draft: QuickAddDraft): QuickAddErrors {
   if (!draft.type) errors.type = "Choose a type.";
   const title = draft.title.trim();
   if (!title) errors.title = "Add a title.";
-  else if (title.length > 120) errors.title = "Use 120 characters or fewer.";
+  else if (title.length > 200) errors.title = "Use 200 characters or fewer.";
   if ((draft.type === "event" || draft.type === "reminder") && !draft.date) {
     errors.date = "Add a date.";
   }

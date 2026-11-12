@@ -17,6 +17,7 @@ Playwright is configured in `apps/frontend/playwright.config.ts` and runs on pul
 
 - Phase 01 adds component tests and Playwright coverage, including keyboard and responsive checks, plus screenshot review.
 - Phase 02 adds `pnpm db:test` (`supabase test db`) for two-user RLS and storage isolation. Docker has to be running. A green frontend unit suite does not prove RLS.
+- Phase 03 adds `supabase/tests/productivity.sql` to that same command: validation, versions, idempotency, soft delete, recurrence, daylight-saving time, pagination, and cross-user writes. Playwright covers the signed-out workspace. It does not sign in.
 - API tests should cover validation, conflicts, idempotency, and ownership.
 - Worker tests should cover claims, retries, and shutdown once jobs exist.
 - Do not treat a green unit suite as visual QA or as a penetration test.

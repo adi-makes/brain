@@ -37,7 +37,7 @@ export type QuickAddDraft = {
   end: string;
   severity: Severity;
   body: string;
+  repeat: "none" | "daily" | "weekly";
 };
 
-export const DEMO_NOTICE =
-  "Development fixtures. Changes stay in this browser tab and are not saved.";
+export const DEMO_NOTICE = "";

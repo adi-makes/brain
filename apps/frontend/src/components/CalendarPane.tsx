@@ -65,26 +65,55 @@ function DayButton({
 }
 
 function TimedBlock({ entry, hourHeight }: { entry: CalendarEntry; hourHeight: number }) {
+  const { items, setEditing, moveEvent } = useWorkspace();
+  const open = () => {
+    const record = items.find((item) => item.id === entry.recordId);
+    if (record) setEditing(record);
+  };
   const start = entry.startMinutes ?? START_HOUR * 60;
   const end = entry.endMinutes ?? start + 45;
   const top = ((Math.max(start, START_HOUR * 60) - START_HOUR * 60) / 60) * hourHeight;
   const height = Math.max(((end - start) / 60) * hourHeight, 28);
+  const drag = useRef<{ y: number; moved: boolean } | null>(null);
   return (
-    <div
-      className="absolute inset-x-1 overflow-hidden rounded-[8px] border border-line bg-surface px-1.5 py-1 text-left shadow-[var(--shadow)]"
+    <button
+      type="button"
+      aria-label={`${entry.title}, drag to change the time or activate to edit`}
+      onPointerDown={(event) => {
+        drag.current = { y: event.clientY, moved: false };
+        event.currentTarget.setPointerCapture(event.pointerId);
+      }}
+      onPointerMove={(event) => {
+        if (drag.current && Math.abs(event.clientY - drag.current.y) > 8) drag.current.moved = true;
+      }}
+      onPointerUp={(event) => {
+        const state = drag.current;
+        drag.current = null;
+        if (!state?.moved || entry.kind !== "event") {
+          open();
+          return;
+        }
+        const deltaMinutes = Math.round(((event.clientY - state.y) / hourHeight) * 4) * 15;
+        moveEvent(entry.recordId, start + deltaMinutes);
+      }}
+      className="absolute inset-x-1 cursor-pointer overflow-hidden rounded-[8px] border border-line bg-surface px-1.5 py-1 text-left shadow-[var(--shadow)]"
       style={{ top, height }}
     >
       <p className="truncate text-xs font-medium text-ink">{entry.title}</p>
       <p className="text-[11px] tabular-nums text-muted">
         {String(Math.floor(start / 60)).padStart(2, "0")}:{String(start % 60).padStart(2, "0")}
       </p>
-    </div>
+    </button>
   );
 }
 
 export function CalendarPane() {
-  const { today, selectedDate, setSelectedDate, view, items, density, weekStartsOn } =
+  const { today, selectedDate, setSelectedDate, view, items, density, weekStartsOn, setEditing } =
     useWorkspace();
+  const openRecord = (id: string) => {
+    const record = items.find((item) => item.id === id);
+    if (record) setEditing(record);
+  };
   const entries = toCalendarEntries(items);
   const hourHeight = density === "compact" ? 40 : 52;
   const regionRef = useRef<HTMLDivElement>(null);
@@ -158,13 +187,19 @@ export function CalendarPane() {
       <div className="border-t border-line px-4 py-3">
         <h2 className="text-sm font-medium text-ink">{formatLong(selectedDate)}</h2>
         {selectedEntries.length === 0 ? (
-          <p className="mt-1 text-sm text-muted">Nothing scheduled on this day in the fixtures.</p>
+          <p className="mt-1 text-sm text-muted">Nothing scheduled on this day.</p>
         ) : (
           <ul className="mt-2 space-y-1">
             {selectedEntries.map((entry) => (
               <li key={entry.id} className="flex items-center gap-2 text-sm text-ink">
                 <SeverityMark entry={entry} />
-                <span className={entry.done ? "text-muted line-through" : ""}>{entry.title}</span>
+                <button
+                  type="button"
+                  onClick={() => openRecord(entry.recordId)}
+                  className={`min-h-11 text-left ${entry.done ? "text-muted line-through" : ""}`}
+                >
+                  {entry.title}
+                </button>
                 <span className="text-xs uppercase tracking-wide text-muted">{entry.kind}</span>
               </li>
             ))}

@@ -445,3 +445,241 @@ JOURNAL AND REPORT
 Capture exact prompt and exact Cursor final response. Report schema, migrations, RLS matrix, storage policies, auth flow, test results, unverified cases, env variables, Git status and migration rollback concerns. Stop for approval.
 also make sure the readme and other docs are updated after each task/prompt. the readme must have project info as well all the setup info so that any user can know whats ot be odne tc. also if anything needs to be domne by user(crate and set supabase project and settings, api keys etc) let me knoiw
 ```
+
+<!-- second-brain-journal-entry -->
+
+## jrn_20261112T094346Z_63f945a3
+
+- kind: response
+- phase: 02
+- timestamp_utc: 2026-11-12T09:43:46Z
+- conversation_id: 77e3abd1-5c49-44c6-ad72-fc6cdc452d4c
+- generation_id: 13b92454-a8c2-4046-a4a0-9b1016916ab5
+- cursor_version: 3.29.15
+- capture_status: HOOK VERIFIED
+- response_status: 
+- pairs_with: jrn_20261112T082220Z_a8d21ad9
+- attachment_count: 0
+- text_present: true
+
+````text
+Phase 02 is on `phase/02-supabase-auth` and pushed. It is not merged. The local two-user isolation tests passed. Your hosted Supabase project does not exist in this repo yet, so hosted auth and hosted row-level security are not verified.
+
+Commits:
+
+- `7487186` `feat(auth): add Supabase schema foundation and RLS-secured authentication`
+- `6ce05f2` `chore(db): check in generated Supabase database types`
+
+Branch: `origin/phase/02-supabase-auth`. Working tree was clean after the push. The prompt journal hook may append this report afterward.
+
+## What you need to do
+
+The app will keep showing “Supabase is not configured” until you do this. Empty values are valid; the Phase 01 workspace still loads.
+
+1. Create a project at [supabase.com](https://supabase.com). Save the database password in a password manager, not in Git.
+2. In **Project Settings → API**, copy the project URL, the `anon` public key, and the `service_role` secret into the root `.env` only:
+
+| Variable | Role |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Public project URL. Safe in the browser. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public key. Row-level security still applies. |
+| `SUPABASE_URL` | Same URL, for later server jobs. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Bypasses row-level security. Never put this in frontend code. |
+| `FRONTEND_ORIGIN` | API CORS origin. Default `http://127.0.0.1:3000`. |
+
+3. In **Authentication → URL configuration**, set Site URL to `http://127.0.0.1:3000`. Allow `http://127.0.0.1:3000/auth/callback` and `http://localhost:3000/auth/callback`.
+4. Keep email confirmations on. A confirmed email is the verified state. `profiles.ai_permitted` stays false and does not block the workspace.
+5. In **Project Settings → Database**, check the Postgres major version. `supabase/config.toml` says 17. Change `major_version` if yours is different, before you push migrations.
+6. Apply the migration. Do not create the `attachments` bucket by hand.
+
+```bash
+cp .env.example .env
+pnpm exec supabase login
+pnpm exec supabase link --project-ref YOUR_PROJECT_REF
+pnpm exec supabase db push
+```
+
+Then restart `pnpm dev:frontend`. Full steps are in `README.md` and `docs/operations/supabase.md`.
+
+## Schema
+
+Documented in `docs/architecture/schema.md` before the SQL. One migration: `supabase/migrations/20261112120000_foundation.sql`. Nineteen tables. Today, Upcoming, and To-Do are not tables.
+
+Identity: `profiles` (one row per `auth.users` id, including `ai_permitted`), `user_devices` (no tokens; Auth owns sessions).
+
+Canonical records: `work_items`, `events`, `notes`, `reminders`, `recurrence_series`, `recurrence_exceptions`, `planning_blocks`, `task_effort_logs`, `auto_surface_states`.
+
+Operations: `operation_batches`, `operation_journal`, `operation_batch_items`, `notification_outbox`, `notification_deliveries`, `idempotency_keys`, `ai_approval_records`, `attachments`.
+
+Parents use `unique (owner_id, id)`. Children reference that pair, so a row owned by A cannot point at a parent owned by B. Instants are `timestamptz`. All-day values are `date`. Category is `personal|home|work|admin|learning`. Severity is `critical|high|medium|low`. A work item has either `due_on` or `due_at`. Estimates are 0–20160 minutes. Effort logs are 1–1440 minutes. Planning blocks are `active|completed|cancelled|obsolete`; unapproved ghost blocks are not stored. Soft delete is `deleted_at` and stays visible to the owner. Changing `owner_id` raises `P0001`.
+
+Cascade: deleting `auth.users` deletes the profile; deleting a profile deletes owned rows and storage objects under `attachments/{user id}/`. Work items cascade notes, reminders, blocks, effort, auto-surface state, and their attachments. Events cascade linked notes, reminders, and attachments. Series cascade exceptions and events. Batches cascade journal and batch items. Outbox rows cascade deliveries. Reminders cascade outbox rows.
+
+## Row-level security
+
+Every user-owned table has row-level security enabled and forced. `anon` has no grants. `authenticated` gets select, insert, update, and delete only where `owner_id = auth.uid()` (`profiles.id = auth.uid()`). `service_role` has full grants for a later worker. The Next.js app does not create a service-role client.
+
+## Storage
+
+Private bucket `attachments`, 10 MB, MIME types JPEG, PNG, WebP, PDF, and plain text. Policies require the first folder to be `auth.uid()`, reject `..`, and check extension, metadata MIME type, and size on insert. The bucket limit is the real upload cap.
+
+## Auth
+
+`@supabase/ssr` with `apps/frontend/proxy.ts` (Next.js 16; the deprecated `middleware.ts` file is not used). Sign-in, sign-up, and sign-out are server actions that require a matching `Origin` host. Redirects allow only a single-slash relative path. `/account` is the only protected route, and only when Supabase is configured. Unverified users can still use the workspace. Email verification and `ai_permitted` are separate. Cookies are `SameSite=Lax` and `Secure` in production. They are not `HttpOnly` because the official browser client reads them; the content security policy does not allow third-party scripts. The API allows credentialed CORS only from `FRONTEND_ORIGIN`. Rate limiting is the Supabase Auth limits recorded in `config.toml`; there is no second app limiter yet.
+
+## Tests that ran
+
+| Check | Result |
+| --- | --- |
+| `pnpm db:test` on local Postgres 17 | 15/15 pgTAP assertions passed. User A cannot read, update, or delete B’s work item; cannot change `owner_id`; cannot insert a note against B’s parent (23503); cannot write B’s storage path (42501). Anonymous select and insert are denied. A cannot see B’s profile or B’s file. |
+| Frontend unit tests | 13 passed |
+| Playwright | 9 passed, including the unconfigured sign-in page and the existing workspace flows |
+| `tsc --noEmit` after `pnpm db:types` | Passed. Types cover all 19 tables. |
+| Backend pytest, including the CORS origin test | 9 passed earlier in this phase |
+| Env layout and gitleaks on both commits | Passed |
+
+## Not verified
+
+No hosted project is linked, so `db push`, a real sign-up email, the callback exchange, and hosted storage uploads were not run. CI does not run the pgTAP file. The content-security-policy still allows inline scripts because the App Router emits them.
+
+Local Docker is still up at `127.0.0.1:54321` (API) and `127.0.0.1:54322` (database). Those are the CLI’s local demo credentials, not your project. Stop the stack with `pnpm exec supabase stop` when you are done.
+
+## Rollback
+
+Do not edit `20261112120000_foundation.sql` after `db push`. There is no down migration. Reversal is a new migration that drops policies, the bucket, triggers, and tables from children to parents, then the functions. There is no production data in this repository.
+
+I am stopped here for your approval. I have not opened a pull request and I have not started Phase 03.
+````
+
+<!-- second-brain-journal-entry -->
+
+## jrn_20261112T094353Z_f0277af4
+
+- kind: response
+- phase: 03
+- timestamp_utc: 2026-11-12T09:43:53Z
+- conversation_id: 77e3abd1-5c49-44c6-ad72-fc6cdc452d4c
+- generation_id: 02cac9cb-483e-4d48-85d1-b0be186d9fce
+- cursor_version: 3.29.15
+- capture_status: HOOK VERIFIED
+- response_status: 
+- pairs_with: UNMATCHED
+- attachment_count: 0
+- text_present: true
+
+```text
+Those two Playwright runs failed while both `middleware.ts` and `proxy.ts` were present. Next.js 16 rejects that pair. The old middleware file was removed, and the later full run passed all 9 tests, including the unconfigured sign-in page.
+
+That result is already in `6ce05f2` on `phase/02-supabase-auth`. The branch is pushed and still waiting for your approval before a pull request or Phase 03.
+```
+
+<!-- second-brain-journal-entry -->
+
+## jrn_20261112T105938Z_adcfda01
+
+- kind: prompt
+- phase: unknown
+- timestamp_utc: 2026-11-12T10:59:38Z
+- conversation_id: 77e3abd1-5c49-44c6-ad72-fc6cdc452d4c
+- generation_id: 12df8dfa-7c87-4109-b461-c3b6a98667cf
+- cursor_version: 3.29.15
+- capture_status: HOOK VERIFIED
+- response_status: PENDING
+- pairs_with: 
+- attachment_count: 2
+- text_present: true
+
+```text
+
+```
+
+<!-- second-brain-journal-entry -->
+
+## jrn_20261112T105952Z_8beafb91
+
+- kind: response
+- phase: 03
+- timestamp_utc: 2026-11-12T10:59:52Z
+- conversation_id: 77e3abd1-5c49-44c6-ad72-fc6cdc452d4c
+- generation_id: 12df8dfa-7c87-4109-b461-c3b6a98667cf
+- cursor_version: 3.29.15
+- capture_status: HOOK VERIFIED
+- response_status: 
+- pairs_with: jrn_20261112T105938Z_adcfda01
+- attachment_count: 0
+- text_present: true
+
+```text
+Those two Playwright runs failed while both `middleware.ts` and `proxy.ts` were present. Next.js 16 rejects that pair. The old middleware file was removed, and the later full run passed all 9 tests, including the unconfigured sign-in page.
+
+That result is already in `6ce05f2` on `phase/02-supabase-auth`. The branch is pushed and still waiting for your approval before a pull request or Phase 03.
+```
+
+<!-- second-brain-journal-entry -->
+
+## jrn_20261112T110802Z_563b8a37
+
+- kind: prompt
+- phase: unknown
+- timestamp_utc: 2026-11-12T11:08:02Z
+- conversation_id: 77e3abd1-5c49-44c6-ad72-fc6cdc452d4c
+- generation_id: 4591ae0f-7ce1-43a3-a734-faccdbd9b9c5
+- cursor_version: 3.29.15
+- capture_status: HOOK VERIFIED
+- response_status: PENDING
+- pairs_with: 
+- attachment_count: 2
+- text_present: true
+
+```text
+Execute the selected diff-tab commit-and-push action.
+```
+
+<!-- second-brain-journal-entry -->
+
+## jrn_20261112T111343Z_e78d34d8
+
+- kind: prompt
+- phase: 03
+- timestamp_utc: 2026-11-12T11:13:43Z
+- conversation_id: 77e3abd1-5c49-44c6-ad72-fc6cdc452d4c
+- generation_id: 05f83f46-c55a-4780-a283-0e3587d52b1a
+- cursor_version: 3.29.15
+- capture_status: HOOK VERIFIED
+- response_status: PENDING
+- pairs_with: 
+- attachment_count: 2
+- text_present: true
+
+```text
+# SECOND BRAIN — PHASE 03: MANUAL PRODUCTIVITY CORE
+
+Read Part A, AGENTS.md, current schema, prior reports and journal. Implement only manual productivity CRUD and calendar integration. No AI, deterministic planner, notification delivery engine or offline sync.
+
+GOAL
+Make Second Brain genuinely useful without AI. Implement canonical work items/tasks, events, notes and reminder definitions with secure CRUD, validation, optimistic concurrency and a useful calendar.
+
+DOMAIN
+- A canonical work item is the only task/work record. Views are projections.
+- Model category, title, description, status, severity, estimated effort, due/deadline semantics, completion and version explicitly.
+- Events support timed and all-day semantics, timezone and location/description.
+- Notes support safe content, timestamps and search-ready metadata.
+- Reminder definitions can link to an event or work item and support absolute or event-relative schedule; delivery is a later phase.
+- Use soft-delete policy consistently and ensure deleted records are not surfaced.
+- Implement recurrence series and exception/override foundations now if required for correct event/task recurrence. Support “this occurrence”, “this and following”, and “all in series”; preserve original occurrence IDs and local wall time/IANA timezone. Handle DST. Prevent duplicate occurrence identity. If recurrence UI scope must be staged, implement the domain/API correctly and clearly report any UI limitation rather than faking recurrence.
+
+API AND TRANSACTIONS
+Use server-side validation, ownership checks, DB transactions and version checks. Add idempotency for retryable create/update operations. Prevent lost updates. Use stable pagination/filter/sort contracts. Keep calendar library as presentation adapter only; convert validated domain data to calendar events and map drag/drop back to explicit server mutations. Provide accessible edit form alternative to drag/drop.
+
+UI
+Connect Phase 01 screens to real authenticated data. Implement create/edit/delete/complete flows for work items, events, notes and reminder definitions. Quick-add must validate and save. Calendar supports navigation, views, selected date, event details and safe edit interactions. Show optimistic states only when rollback/error behavior is correct. Do not invent data in production; seed only isolated test fixtures.
+
+TESTS
+Unit/integration/E2E tests for each CRUD operation, validation, ownership, pagination, concurrency conflicts, recurrence/DST cases, all-day dates, calendar adapter, soft delete and idempotent retry. Test empty/error/loading states. Run two-user isolation tests.
+
+GIT
+Branch `phase/03-productivity-core`; commit `feat(core): add secure tasks events notes and calendar workflows`; push only after checks and review. Env-layout/secret checks.
+
+JOURNAL
+Append exact prompt and exact final response. Report data model, endpoints, UI routes, recurrence scope, tests and limitations. Stop for approval.
+```

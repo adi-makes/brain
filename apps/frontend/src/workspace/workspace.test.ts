@@ -17,6 +17,7 @@ const draft = (overrides: Partial<QuickAddDraft> = {}): QuickAddDraft => ({
   end: "",
   severity: "low",
   body: "",
+  repeat: "none",
   ...overrides,
 });
 

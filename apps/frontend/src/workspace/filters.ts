@@ -1,4 +1,16 @@
-import type { DemoItem, Severity, TaskFilter } from "../demo/types";
+import type { Severity, TaskFilter } from "../demo/types";
+
+type Listed = {
+  id: string;
+  kind: string;
+  title: string;
+  body?: string;
+  date?: string;
+  severity?: Severity;
+  done?: boolean;
+  reason?: string;
+  location?: string;
+};
 
 const SEVERITY_RANK: Record<Severity, number> = {
   critical: 0,
@@ -7,7 +19,7 @@ const SEVERITY_RANK: Record<Severity, number> = {
   low: 3,
 };
 
-export function filterTasks(items: readonly DemoItem[], filter: TaskFilter): DemoItem[] {
+export function filterTasks<T extends Listed>(items: readonly T[], filter: TaskFilter): T[] {
   return items.filter((item) => {
     if (item.kind !== "task") return false;
     if (filter === "open") return !item.done;
@@ -17,7 +29,7 @@ export function filterTasks(items: readonly DemoItem[], filter: TaskFilter): Dem
   });
 }
 
-export function upcomingWork(items: readonly DemoItem[], today: string): DemoItem[] {
+export function upcomingWork<T extends Listed>(items: readonly T[], today: string): T[] {
   return items
     .filter((item) => item.kind === "task" && !item.done && item.date && item.date > today)
     .sort((a, b) => {
@@ -27,14 +39,17 @@ export function upcomingWork(items: readonly DemoItem[], today: string): DemoIte
     });
 }
 
-export function todayTasks(items: readonly DemoItem[], today: string): DemoItem[] {
+export function todayTasks<T extends Listed>(items: readonly T[], today: string): T[] {
   return items.filter((item) => item.kind === "task" && !item.done && item.date === today);
 }
 
-export function searchItems(items: readonly DemoItem[], query: string): DemoItem[] {
+export function searchItems<T extends Listed>(items: readonly T[], query: string): T[] {
   const needle = query.trim().toLowerCase();
   if (!needle) return [];
   return items.filter((item) =>
-    [item.title, item.body, item.reason, item.kind].join(" ").toLowerCase().includes(needle),
+    [item.title, item.body, item.reason, item.location, item.kind]
+      .join(" ")
+      .toLowerCase()
+      .includes(needle),
   );
 }

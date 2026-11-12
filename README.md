@@ -4,7 +4,7 @@ Second Brain is a personal productivity workspace centred on a calendar. Work it
 
 This repository is a pnpm and uv monorepo:
 
-- `apps/frontend` — Next.js App Router. Phase 01 is the local fixture workspace. Phase 02 adds Supabase Auth around that shell. Task, event, and note editing against the database is not built yet.
+- `apps/frontend` — Next.js App Router. Signed-in people can save tasks, events, notes, and reminder definitions. The assistant does not write records.
 - `services/backend` — FastAPI API and a separate worker process. They share one Python package and image. The worker does not deliver reminders yet.
 - `packages/schemas` — shared validation.
 - `packages/planner-contracts` — planner contract notes only. There is one planner, and it is not implemented yet.
@@ -34,7 +34,7 @@ uv sync --project services/backend
 sh scripts/install-git-hooks.sh
 ```
 
-`.env` is gitignored. The fixture workspace runs with the Supabase values left empty. Sign-in then says that Supabase is not configured, and the sample calendar stays in the browser tab.
+`.env` is gitignored. With the Supabase values empty, sign-in says that Supabase is not configured and the workspace lists stay empty. Nothing is saved in the browser.
 
 ## What you configure in Supabase
 
@@ -87,7 +87,7 @@ These scripts load the root `.env`. There is no env file inside `apps/` or `serv
 
 Routes:
 
-- `/` workspace fixtures
+- `/` tasks, events, notes, reminders, and the calendar. Saving requires a signed-in session.
 - `/settings` local theme and display preferences
 - `/sign-in` and `/sign-up`
 - `/account` requires a session when Supabase is configured

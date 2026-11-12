@@ -208,6 +208,7 @@ export type Database = {
           ends_at: string | null;
           ends_on: string | null;
           id: string;
+          location: string;
           occurrence_on: string | null;
           owner_id: string;
           series_id: string | null;
@@ -228,6 +229,7 @@ export type Database = {
           ends_at?: string | null;
           ends_on?: string | null;
           id?: string;
+          location?: string;
           occurrence_on?: string | null;
           owner_id: string;
           series_id?: string | null;
@@ -247,6 +249,7 @@ export type Database = {
           ends_at?: string | null;
           ends_on?: string | null;
           id?: string;
+          location?: string;
           occurrence_on?: string | null;
           owner_id?: string;
           series_id?: string | null;
@@ -277,27 +280,36 @@ export type Database = {
       idempotency_keys: {
         Row: {
           created_at: string;
+          entity_id: string | null;
+          entity_type: string | null;
           expires_at: string;
           key: string;
           owner_id: string;
           request_hash: string;
+          response: Json | null;
           response_status: number | null;
         };
         ComputedFields: never;
         Insert: {
           created_at?: string;
+          entity_id?: string | null;
+          entity_type?: string | null;
           expires_at: string;
           key: string;
           owner_id: string;
           request_hash: string;
+          response?: Json | null;
           response_status?: number | null;
         };
         Update: {
           created_at?: string;
+          entity_id?: string | null;
+          entity_type?: string | null;
           expires_at?: string;
           key?: string;
           owner_id?: string;
           request_hash?: string;
+          response?: Json | null;
           response_status?: number | null;
         };
         Relationships: [
@@ -318,6 +330,7 @@ export type Database = {
           event_id: string | null;
           id: string;
           owner_id: string;
+          search_vector: unknown;
           title: string;
           updated_at: string;
           version: number;
@@ -331,6 +344,7 @@ export type Database = {
           event_id?: string | null;
           id?: string;
           owner_id: string;
+          search_vector?: never;
           title: string;
           updated_at?: string;
           version?: number;
@@ -343,6 +357,7 @@ export type Database = {
           event_id?: string | null;
           id?: string;
           owner_id?: string;
+          search_vector?: never;
           title?: string;
           updated_at?: string;
           version?: number;
@@ -786,6 +801,7 @@ export type Database = {
           id: string;
           interval_count: number;
           local_start_time: string | null;
+          materialized_through: string | null;
           occurrence_count: number | null;
           owner_id: string;
           starts_on: string;
@@ -804,6 +820,7 @@ export type Database = {
           id?: string;
           interval_count?: number;
           local_start_time?: string | null;
+          materialized_through?: string | null;
           occurrence_count?: number | null;
           owner_id: string;
           starts_on: string;
@@ -821,6 +838,7 @@ export type Database = {
           id?: string;
           interval_count?: number;
           local_start_time?: string | null;
+          materialized_through?: string | null;
           occurrence_count?: number | null;
           owner_id?: string;
           starts_on?: string;
@@ -1078,7 +1096,206 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      clean_text: { Args: { p_value: string }; Returns: string };
+      create_event: {
+        Args: {
+          p_all_day: boolean;
+          p_body: string;
+          p_category: string;
+          p_count: number;
+          p_ends_on: string;
+          p_frequency: string;
+          p_idempotency_key: string;
+          p_interval: number;
+          p_local_end: string;
+          p_local_start: string;
+          p_location: string;
+          p_starts_on: string;
+          p_timezone: string;
+          p_title: string;
+          p_until: string;
+        };
+        Returns: Json;
+      };
+      create_note: {
+        Args: {
+          p_body: string;
+          p_event_id: string;
+          p_idempotency_key: string;
+          p_title: string;
+          p_work_item_id: string;
+        };
+        Returns: Json;
+      };
+      create_reminder: {
+        Args: {
+          p_channel: string;
+          p_event_id: string;
+          p_idempotency_key: string;
+          p_offset_minutes: number;
+          p_remind_at: string;
+          p_remind_on: string;
+          p_title: string;
+          p_work_item_id: string;
+        };
+        Returns: Json;
+      };
+      create_work_item: {
+        Args: {
+          p_body: string;
+          p_category: string;
+          p_due_at: string;
+          p_due_on: string;
+          p_estimate_minutes: number;
+          p_idempotency_key: string;
+          p_severity: string;
+          p_title: string;
+        };
+        Returns: Json;
+      };
+      event_bounds: {
+        Args: {
+          p_all_day: boolean;
+          p_ends_on: string;
+          p_local_end: string;
+          p_local_start: string;
+          p_starts_on: string;
+          p_timezone: string;
+        };
+        Returns: {
+          duration_minutes: number;
+          ends_at: string;
+          ends_on: string;
+          starts_at: string;
+          starts_on: string;
+        }[];
+      };
+      finish_idempotency: {
+        Args: { p_entity_id: string; p_entity_type: string; p_key: string; p_response: Json };
+        Returns: undefined;
+      };
+      list_events_between: { Args: { p_end: string; p_start: string }; Returns: Json };
+      list_notes: { Args: { p_limit: number; p_query: string }; Returns: Json };
+      list_reminders: { Args: { p_limit: number }; Returns: Json };
+      list_work_items: {
+        Args: { p_cursor_created: string; p_cursor_id: string; p_limit: number; p_status: string };
+        Returns: Json;
+      };
+      materialize_series: {
+        Args: {
+          p_body?: string;
+          p_category?: string;
+          p_location?: string;
+          p_series_id: string;
+          p_title?: string;
+        };
+        Returns: number;
+      };
+      occurrence_date: {
+        Args: { p_frequency: string; p_index: number; p_interval: number; p_start: string };
+        Returns: string;
+      };
+      page_limit: { Args: { p_limit: number }; Returns: number };
+      require_category: { Args: { p_value: string }; Returns: string };
+      require_text: { Args: { p_label: string; p_max: number; p_value: string }; Returns: string };
+      require_zone: { Args: { p_timezone: string }; Returns: string };
+      restore_work_item: {
+        Args: { p_expected_version: number; p_id: string; p_idempotency_key: string };
+        Returns: Json;
+      };
+      set_work_item_status: {
+        Args: {
+          p_expected_version: number;
+          p_id: string;
+          p_idempotency_key: string;
+          p_status: string;
+        };
+        Returns: Json;
+      };
+      soft_delete_event: {
+        Args: {
+          p_expected_version: number;
+          p_id: string;
+          p_idempotency_key: string;
+          p_scope: string;
+        };
+        Returns: Json;
+      };
+      soft_delete_note: {
+        Args: { p_expected_version: number; p_id: string; p_idempotency_key: string };
+        Returns: Json;
+      };
+      soft_delete_reminder: {
+        Args: { p_expected_version: number; p_id: string; p_idempotency_key: string };
+        Returns: Json;
+      };
+      soft_delete_work_item: {
+        Args: { p_expected_version: number; p_id: string; p_idempotency_key: string };
+        Returns: Json;
+      };
+      take_idempotency: { Args: { p_hash: string; p_key: string }; Returns: Json };
+      update_event: {
+        Args: {
+          p_all_day: boolean;
+          p_body: string;
+          p_category: string;
+          p_ends_on: string;
+          p_expected_version: number;
+          p_id: string;
+          p_idempotency_key: string;
+          p_local_end: string;
+          p_local_start: string;
+          p_location: string;
+          p_scope: string;
+          p_starts_on: string;
+          p_timezone: string;
+          p_title: string;
+        };
+        Returns: Json;
+      };
+      update_note: {
+        Args: {
+          p_body: string;
+          p_event_id: string;
+          p_expected_version: number;
+          p_id: string;
+          p_idempotency_key: string;
+          p_title: string;
+          p_work_item_id: string;
+        };
+        Returns: Json;
+      };
+      update_reminder: {
+        Args: {
+          p_channel: string;
+          p_event_id: string;
+          p_expected_version: number;
+          p_id: string;
+          p_idempotency_key: string;
+          p_offset_minutes: number;
+          p_remind_at: string;
+          p_remind_on: string;
+          p_status: string;
+          p_title: string;
+          p_work_item_id: string;
+        };
+        Returns: Json;
+      };
+      update_work_item: {
+        Args: {
+          p_body: string;
+          p_category: string;
+          p_due_at: string;
+          p_due_on: string;
+          p_estimate_minutes: number;
+          p_expected_version: number;
+          p_id: string;
+          p_idempotency_key: string;
+          p_severity: string;
+          p_title: string;
+        };
+        Returns: Json;
+      };
     };
     Enums: {
       [_ in never]: never;

@@ -29,7 +29,7 @@ Set these in `/.env` only:
 | `SUPABASE_SERVICE_ROLE_KEY`     | Future worker or admin jobs only. Never import it from `apps/frontend`.      |
 | `FRONTEND_ORIGIN`               | API CORS allow list. Default `http://127.0.0.1:3000`.                        |
 
-Restart `pnpm dev:frontend` after changing `.env`. An empty value means auth stays in the unconfigured state and the fixture workspace still loads.
+Restart `pnpm dev:frontend` after changing `.env`. An empty value means auth stays unconfigured and the workspace lists stay empty.
 
 ## Apply the migration
 
@@ -41,7 +41,7 @@ pnpm exec supabase link --project-ref YOUR_PROJECT_REF
 pnpm exec supabase db push
 ```
 
-`db push` applies `supabase/migrations`. The migration creates the private `attachments` bucket, the 10 MB limit, and the MIME allow list. You do not create that bucket by hand.
+`db push` applies every file in `supabase/migrations`, including the foundation and the productivity functions. The first migration creates the private `attachments` bucket, the 10 MB limit, and the MIME allow list. You do not create that bucket by hand.
 
 Do not run `db push` against a database that already has these table names. There is no down migration. Rolling back means a new migration that drops the foundation in child-to-parent order, including `storage.objects` under `attachments/`.
 

@@ -10,3 +10,22 @@ export type HealthResponse = z.infer<typeof healthResponseSchema>;
 export function parseHealthResponse(value: unknown): HealthResponse {
   return healthResponseSchema.parse(value);
 }
+
+export {
+  categories,
+  editScopes,
+  eventInputSchema,
+  eventUpdateSchema,
+  frequencies,
+  noteInputSchema,
+  noteUpdateSchema,
+  reminderChannels,
+  reminderInputSchema,
+  reminderUpdateSchema,
+  severities,
+  workItemInputSchema,
+  workItemStatusSchema,
+  workItemUpdateSchema,
+  workStatuses,
+} from "./productivity";
+export type { EventInput, NoteInput, ReminderInput, WorkItemInput } from "./productivity";

@@ -33,15 +33,15 @@ test("persists the theme choice", async ({ page }) => {
   await expect(page.locator("html")).not.toHaveClass(/dark/);
 });
 
-test("adds a task in the current tab after validation", async ({ page }) => {
+test("validates quick add and does not invent a saved task", async ({ page }) => {
   await openWorkspace(page);
   await page.getByRole("button", { name: "Add" }).click();
-  await page.getByRole("button", { name: "Add in this tab" }).click();
+  await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByText("Add a title.")).toBeVisible();
   await page.getByLabel("Title").fill("Fold the linen");
-  await page.getByRole("button", { name: "Add in this tab" }).click();
-  await expect(page.locator("#todo").getByText("Fold the linen")).toBeVisible();
-  await expect(page.getByText("Development fixtures.")).toBeVisible();
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByRole("alert").getByText("Sign in to save.")).toBeVisible();
+  await expect(page.locator("#todo").getByText("Fold the linen")).toHaveCount(0);
 });
 
 test("changes calendar view and moves the selected day with the keyboard", async ({ page }) => {
@@ -57,21 +57,21 @@ test("changes calendar view and moves the selected day with the keyboard", async
   await expect(heading).not.toHaveText(before);
 });
 
-test("filters the to-do list", async ({ page }) => {
+test("filters the empty to-do list", async ({ page }) => {
   await openWorkspace(page);
   await page.getByRole("button", { name: "Done", exact: true }).click();
-  await expect(page.locator("#todo").getByText("Water the fig")).toBeVisible();
+  await expect(page.locator("#todo").getByText("No to-do items match this filter.")).toBeVisible();
   await page.getByRole("button", { name: "Open", exact: true }).first().click();
-  await expect(page.locator("#todo").getByText("Draft the November note")).toBeVisible();
+  await expect(page.locator("#todo").getByText("No to-do items match this filter.")).toBeVisible();
 });
 
 test("opens search from the keyboard and reports no results", async ({ page }) => {
   await openWorkspace(page);
   await page.keyboard.press("Control+k");
-  await page.getByLabel("Search development fixtures").fill("zz-no-match");
-  await expect(page.getByText(/No fixture matches/)).toBeVisible();
+  await page.getByLabel("Search saved records").fill("zz-no-match");
+  await expect(page.getByText(/No records match/)).toBeVisible();
   await page.keyboard.press("Escape");
-  await expect(page.getByLabel("Search development fixtures")).toHaveCount(0);
+  await expect(page.getByLabel("Search saved records")).toHaveCount(0);
 });
 
 test("has no serious axe violations on the workspace and settings", async ({ page }) => {

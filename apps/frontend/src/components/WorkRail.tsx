@@ -2,7 +2,8 @@
 
 import type { ReactNode } from "react";
 import { formatLong } from "../calendar/dates";
-import type { DemoItem, Severity, TaskFilter } from "../demo/types";
+import type { Severity, TaskFilter } from "../demo/types";
+import type { WorkspaceRecord } from "../productivity/types";
 import { filterTasks, todayTasks, upcomingWork } from "../workspace/filters";
 import { useWorkspace } from "../workspace/store";
 
@@ -56,8 +57,16 @@ function EmptyLine({ children }: { children: string }) {
 }
 
 export function WorkRail() {
-  const { today, items, filter, setFilter, toggleTask, pendingTaskId, mutationsPaused } =
-    useWorkspace();
+  const {
+    today,
+    items,
+    filter,
+    setFilter,
+    toggleTask,
+    pendingTaskId,
+    mutationsPaused,
+    setEditing,
+  } = useWorkspace();
   const todayList = todayTasks(items, today);
   const upcoming = upcomingWork(items, today);
   const todos = filterTasks(items, filter);
@@ -67,7 +76,7 @@ export function WorkRail() {
     <aside className="bg-surface lg:min-h-0 lg:w-[22rem] lg:shrink-0 lg:overflow-auto">
       <Section id="today" title="Today">
         {todayList.length === 0 ? (
-          <EmptyLine>Nothing due today in these fixtures.</EmptyLine>
+          <EmptyLine>Nothing due today.</EmptyLine>
         ) : (
           <ItemList items={todayList} />
         )}
@@ -79,12 +88,17 @@ export function WorkRail() {
           <ul className="space-y-3">
             {upcoming.map((item) => (
               <li key={item.id}>
-                <p className="text-sm text-ink">{item.title}</p>
+                <button
+                  type="button"
+                  onClick={() => setEditing(item)}
+                  className="min-h-11 text-left text-sm text-ink"
+                >
+                  {item.title}
+                </button>
                 <p className="mt-1 flex flex-wrap gap-2 text-xs text-muted">
                   <span>{item.date ? formatLong(item.date) : "No date"}</span>
                   <Mark severity={item.severity} />
                 </p>
-                {item.reason ? <p className="mt-1 text-xs text-muted">{item.reason}</p> : null}
               </li>
             ))}
           </ul>
@@ -122,12 +136,16 @@ export function WorkRail() {
                   {pendingTaskId === item.id ? "Saving…" : item.done ? "Mark open" : "Mark done"}
                 </button>
                 <div>
-                  <p className={`text-sm ${item.done ? "text-muted line-through" : "text-ink"}`}>
+                  <button
+                    type="button"
+                    onClick={() => setEditing(item)}
+                    className={`min-h-11 text-left text-sm ${item.done ? "text-muted line-through" : "text-ink"}`}
+                  >
                     {item.title}
-                  </p>
+                  </button>
                   <p className="text-xs text-muted">
-                    {item.reason ?? "Local fixture"}
-                    {pendingTaskId === item.id ? " · Updating in this tab" : ""}
+                    {item.date ? formatLong(item.date) : "No date"}
+                    {pendingTaskId === item.id ? " · Saving…" : ""}
                   </p>
                 </div>
               </li>
@@ -137,19 +155,45 @@ export function WorkRail() {
       </Section>
       <Section id="reminders" title="Reminders">
         {reminders.length === 0 ? (
-          <EmptyLine>No reminder definitions in these fixtures.</EmptyLine>
+          <EmptyLine>No reminder definitions.</EmptyLine>
         ) : (
           <ul className="space-y-3">
             {reminders.map((item) => (
               <li key={item.id}>
-                <p className="text-sm text-ink">{item.title}</p>
+                <button
+                  type="button"
+                  onClick={() => setEditing(item)}
+                  className="min-h-11 text-left text-sm text-ink"
+                >
+                  {item.title}
+                </button>
                 <p className="text-xs text-muted">
                   {item.date ? formatLong(item.date) : "Unscheduled"}
                   {item.start ? ` · ${item.start}` : ""}
                 </p>
-                {item.reason ? <p className="text-xs text-muted">{item.reason}</p> : null}
               </li>
             ))}
+          </ul>
+        )}
+      </Section>
+      <Section id="notes" title="Notes">
+        {items.filter((item) => item.kind === "note").length === 0 ? (
+          <EmptyLine>No notes.</EmptyLine>
+        ) : (
+          <ul className="space-y-2">
+            {items
+              .filter((item) => item.kind === "note")
+              .map((item) => (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    onClick={() => setEditing(item)}
+                    className="min-h-11 text-left text-sm text-ink"
+                  >
+                    {item.title}
+                  </button>
+                </li>
+              ))}
           </ul>
         )}
       </Section>
@@ -157,15 +201,19 @@ export function WorkRail() {
   );
 }
 
-function ItemList({ items }: { items: DemoItem[] }) {
+function ItemList({ items }: { items: WorkspaceRecord[] }) {
+  const { setEditing } = useWorkspace();
   return (
     <ul className="space-y-2">
       {items.map((item) => (
-        <li key={item.id} className="text-sm text-ink">
-          {item.title}
-          {item.reason ? (
-            <span className="mt-1 block text-xs text-muted">{item.reason}</span>
-          ) : null}
+        <li key={item.id}>
+          <button
+            type="button"
+            onClick={() => setEditing(item)}
+            className="min-h-11 text-left text-sm text-ink"
+          >
+            {item.title}
+          </button>
         </li>
       ))}
     </ul>

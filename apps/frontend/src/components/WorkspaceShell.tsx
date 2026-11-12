@@ -6,7 +6,8 @@ import type { ReactNode } from "react";
 import { addDays, addMonths, formatLong, formatMonth } from "../calendar/dates";
 import { accountLabel } from "../auth/account";
 import type { AuthView } from "../auth/view";
-import { DEMO_NOTICE, type CalendarView, type PreviewMode } from "../demo/types";
+import type { CalendarView, PreviewMode } from "../demo/types";
+import { RecordDialog } from "./RecordDialog";
 import { useWorkspace } from "../workspace/store";
 import { CalendarPane } from "./CalendarPane";
 import { AssistantDock, CommandPalette, QuickAddDialog } from "./dialogs";
@@ -21,7 +22,7 @@ const VIEWS: { id: CalendarView; label: string }[] = [
 ];
 
 const PREVIEWS: { id: PreviewMode; label: string }[] = [
-  { id: "ready", label: "Fixtures" },
+  { id: "ready", label: "Ready" },
   { id: "loading", label: "Loading" },
   { id: "error", label: "Error" },
   { id: "offline", label: "Offline preview" },
@@ -41,6 +42,7 @@ export function WorkspaceShell({ children, auth }: { children: ReactNode; auth: 
     refreshing,
     refresh,
     displayName,
+    notice,
     setSearchOpen,
     setQuickAddOpen,
     setAssistantOpen,
@@ -71,7 +73,7 @@ export function WorkspaceShell({ children, auth }: { children: ReactNode; auth: 
           <div className="ml-auto flex flex-wrap items-center gap-1">
             <button
               type="button"
-              aria-label="Search fixtures"
+              aria-label="Search records"
               className="cursor-pointer inline-flex min-h-11 items-center gap-2 rounded-[10px] px-3 text-sm text-ink hover:bg-canvas"
               onClick={() => setSearchOpen(true)}
             >
@@ -157,7 +159,7 @@ export function WorkspaceShell({ children, auth }: { children: ReactNode; auth: 
               ))}
             </div>
             <label className="sr-only" htmlFor="preview-mode">
-              Fixture preview
+              Workspace state
             </label>
             <select
               id="preview-mode"
@@ -188,7 +190,11 @@ export function WorkspaceShell({ children, auth }: { children: ReactNode; auth: 
           </div>
         ) : null}
       </header>
-      <p className="border-b border-line bg-canvas px-3 py-2 text-xs text-muted">{DEMO_NOTICE}</p>
+      {notice ? (
+        <p role="alert" className="border-b border-line px-3 py-2 text-sm text-ink">
+          {notice}
+        </p>
+      ) : null}
       <AuthStatus auth={auth} />
       <PreviewNote />
       <div
@@ -207,6 +213,7 @@ export function WorkspaceShell({ children, auth }: { children: ReactNode; auth: 
         <MobileLink href="/settings" label="Settings" />
       </nav>
       <QuickAddDialog />
+      <RecordDialog />
       <CommandPalette />
       <AssistantDock />
     </div>
@@ -217,7 +224,7 @@ function AuthStatus({ auth }: { auth: AuthView }) {
   if (auth.status === "unconfigured") {
     return (
       <p className="border-b border-line px-3 py-2 text-xs text-muted">
-        Sign-in is off until Supabase is configured. Fixtures stay in this tab.
+        Sign-in is off until Supabase is configured. The lists stay empty until then.
       </p>
     );
   }
@@ -243,8 +250,7 @@ function PreviewNote() {
   if (preview === "error") {
     return (
       <p role="alert" className="border-b border-line bg-accent-soft px-3 py-2 text-sm text-ink">
-        Fixture preview failed to load. The sample set is still on screen so you can keep looking.
-        This is not a network error.
+        This is a preview of the error state. Saving is paused. It is not a network error.
       </p>
     );
   }
