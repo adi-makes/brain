@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import { entriesOnDate, toCalendarEntries } from "../calendar/adapter";
+import { planCalendarEntries } from "../calendar/plan-display";
 import { addDays, addMonths, monthGrid, startOfWeek, weekDays } from "../calendar/dates";
 import { buildDemoItems } from "../demo/fixtures";
 import type { DemoItem, QuickAddDraft } from "../demo/types";
@@ -19,6 +21,34 @@ const draft = (overrides: Partial<QuickAddDraft> = {}): QuickAddDraft => ({
   body: "",
   repeat: "none",
   ...overrides,
+});
+
+describe("plan display", () => {
+  it("keeps a supplied 20 minute ghost at 20 minutes", () => {
+    const [entry] = planCalendarEntries([
+      {
+        id: "ghost-1",
+        title: "Draft the notes",
+        date: "2026-11-12",
+        start: "09:00",
+        end: "09:20",
+        minutes: 20,
+        reason: "Supplied by the planner.",
+        persisted: false,
+      },
+    ]);
+    expect(entry?.kind).toBe("ghost");
+    expect(entry?.startMinutes).toBe(9 * 60);
+    expect(entry?.endMinutes).toBe(9 * 60 + 20);
+  });
+
+  it("does not search for a slot in the display or the server action", () => {
+    const display = readFileSync(new URL("../calendar/plan-display.ts", import.meta.url), "utf8");
+    const action = readFileSync(new URL("../productivity/plan.ts", import.meta.url), "utf8");
+    expect(display.includes("while (")).toBe(false);
+    expect(action.includes("while (")).toBe(false);
+    expect(action.includes("timedelta")).toBe(false);
+  });
 });
 
 describe("dates", () => {

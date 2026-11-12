@@ -1,5 +1,5 @@
 import { addDays, minutesFromTime } from "./dates";
-import type { ItemKind, Severity } from "../demo/types";
+import type { Severity } from "../demo/types";
 
 export type CalendarSource = {
   id: string;
@@ -20,7 +20,7 @@ export type CalendarSource = {
 export type CalendarEntry = {
   id: string;
   recordId: string;
-  kind: Extract<ItemKind, "event" | "task">;
+  kind: "event" | "task" | "plan" | "ghost";
   title: string;
   date: string;
   startMinutes?: number;

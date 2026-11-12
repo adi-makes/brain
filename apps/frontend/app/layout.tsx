@@ -29,6 +29,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           status: auth.status === "error" ? ("error" as const) : ("signed-out" as const),
           message: auth.status === "error" ? auth.message : undefined,
           records: [],
+          plans: [],
           timeZone: "UTC",
         };
   return (

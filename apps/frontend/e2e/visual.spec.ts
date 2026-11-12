@@ -100,3 +100,33 @@ test.describe("auto surface panels", () => {
     }
   }
 });
+
+test.describe("planner panels", () => {
+  test.describe.configure({ mode: "serial" });
+  test.skip(process.env.VISUAL !== "1", "Set VISUAL=1 to capture screenshots.");
+
+  for (const viewport of widths) {
+    for (const theme of ["light", "dark"] as const) {
+      for (const state of ["plan", "plan-approved", "plan-rejected", "plan-infeasible"] as const) {
+        test(`${viewport.name} ${theme} ${state}`, async ({ page }) => {
+          await page.setViewportSize({ width: viewport.width, height: viewport.height });
+          await page.addInitScript((choice) => {
+            window.localStorage.setItem("second-brain-theme", choice);
+          }, theme);
+          await page.goto("/");
+          await expect(page.locator("html")).toHaveAttribute("data-hydrated", "true");
+          await page.getByLabel("Workspace state").selectOption(state);
+          await expect(page.getByRole("region", { name: "Planning preview" })).toBeVisible();
+          const overflows = await page.evaluate(
+            () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+          );
+          expect(overflows).toBe(false);
+          await page.screenshot({
+            path: `../../artifacts/screenshots/05-planner/${viewport.name}-${theme}-${state}.png`,
+            fullPage: false,
+          });
+        });
+      }
+    }
+  }
+});

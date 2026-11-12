@@ -29,6 +29,10 @@ const PREVIEWS: { id: PreviewMode; label: string }[] = [
   { id: "empty", label: "Empty" },
   { id: "dense", label: "Dense preview" },
   { id: "overdue", label: "Overdue preview" },
+  { id: "plan", label: "Plan preview" },
+  { id: "plan-approved", label: "Plan approved" },
+  { id: "plan-rejected", label: "Plan rejected" },
+  { id: "plan-infeasible", label: "Plan infeasible" },
 ];
 
 export function WorkspaceShell({ children, auth }: { children: ReactNode; auth: AuthView }) {
@@ -264,7 +268,14 @@ function PreviewNote() {
       </p>
     );
   }
-  if (preview === "dense" || preview === "overdue") {
+  if (
+    preview === "dense" ||
+    preview === "overdue" ||
+    preview === "plan" ||
+    preview === "plan-approved" ||
+    preview === "plan-rejected" ||
+    preview === "plan-infeasible"
+  ) {
     return (
       <p role="status" className="border-b border-line bg-accent-soft px-3 py-2 text-sm text-ink">
         Preview. Nothing is saved.

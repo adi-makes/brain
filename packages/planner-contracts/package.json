@@ -2,5 +2,24 @@
   "name": "@second-brain/planner-contracts",
   "private": true,
   "version": "0.0.0",
-  "description": "Documentation-only planner contract package. No scheduling implementation."
+  "type": "module",
+  "description": "Typed planner contract. No scheduling implementation.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.1",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.2",
+    "vitest": "^3.2.4"
+  }
 }

@@ -6,6 +6,7 @@ import type { Severity, TaskFilter } from "../demo/types";
 import type { WorkspaceRecord } from "../productivity/types";
 import { filterTasks, tasksInSection } from "../workspace/filters";
 import { useWorkspace } from "../workspace/store";
+import { PlanPanel } from "./PlanPanel";
 
 const FILTERS: { id: TaskFilter; label: string }[] = [
   { id: "open", label: "Open" },
@@ -67,6 +68,8 @@ export function WorkRail() {
     setEditing,
     restoreSurface,
     pinSurface,
+    preview,
+    plan,
   } = useWorkspace();
   const todayList = tasksInSection(items, "today");
   const upcoming = tasksInSection(items, "upcoming");
@@ -75,6 +78,7 @@ export function WorkRail() {
 
   return (
     <aside className="bg-surface lg:min-h-0 lg:w-[22rem] lg:shrink-0 lg:overflow-auto">
+      <PlanPanel key={`${preview}:${plan?.proposalId ?? "none"}:${plan?.status ?? "none"}`} />
       <Section id="today" title="Today">
         {todayList.length === 0 ? (
           <EmptyLine>Nothing is surfaced for today.</EmptyLine>
@@ -167,6 +171,7 @@ export function WorkRail() {
                         Pin {item.title}
                       </button>
                     ) : null}
+                    <PlanButton item={item} />
                   </div>
                 </div>
               </li>
@@ -222,6 +227,20 @@ export function WorkRail() {
   );
 }
 
+function PlanButton({ item }: { item: WorkspaceRecord }) {
+  const { requestPlan } = useWorkspace();
+  if (item.done) return null;
+  return (
+    <button
+      type="button"
+      onClick={() => requestPlan(item.id)}
+      className="cursor-pointer min-h-11 rounded-[10px] px-2 text-xs text-ink"
+    >
+      Plan {item.title}
+    </button>
+  );
+}
+
 function TaskRow({ item }: { item: WorkspaceRecord }) {
   const { setEditing, dismissSurface, unpinSurface } = useWorkspace();
   return (
@@ -247,6 +266,7 @@ function TaskRow({ item }: { item: WorkspaceRecord }) {
         >
           Dismiss {item.title}
         </button>
+        <PlanButton item={item} />
         {item.surfacePinned ? (
           <button
             type="button"

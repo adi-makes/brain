@@ -9,7 +9,11 @@ export type PreviewMode =
   | "offline"
   | "empty"
   | "dense"
-  | "overdue";
+  | "overdue"
+  | "plan"
+  | "plan-approved"
+  | "plan-rejected"
+  | "plan-infeasible";
 
 export type CalendarView = "week" | "day" | "month";
 

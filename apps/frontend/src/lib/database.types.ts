@@ -663,8 +663,11 @@ export type Database = {
           ends_at: string;
           id: string;
           owner_id: string;
+          proposal_id: string | null;
+          source: string;
           starts_at: string;
           status: string;
+          timezone: string;
           updated_at: string;
           version: number;
           work_item_id: string;
@@ -676,8 +679,11 @@ export type Database = {
           ends_at: string;
           id?: string;
           owner_id: string;
+          proposal_id?: string | null;
+          source?: string;
           starts_at: string;
           status: string;
+          timezone?: string;
           updated_at?: string;
           version?: number;
           work_item_id: string;
@@ -688,8 +694,11 @@ export type Database = {
           ends_at?: string;
           id?: string;
           owner_id?: string;
+          proposal_id?: string | null;
+          source?: string;
           starts_at?: string;
           status?: string;
+          timezone?: string;
           updated_at?: string;
           version?: number;
           work_item_id?: string;
@@ -708,6 +717,66 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "work_items";
             referencedColumns: ["owner_id", "id"];
+          },
+        ];
+      };
+      planning_preferences: {
+        Row: {
+          break_minutes: number;
+          break_start: string;
+          created_at: string;
+          daily_load_minutes: number;
+          owner_id: string;
+          preferred_end: string;
+          preferred_start: string;
+          protected: Json;
+          safety_lead_days: number;
+          updated_at: string;
+          version: number;
+          work_end: string;
+          work_start: string;
+          working_days: number[];
+        };
+        ComputedFields: never;
+        Insert: {
+          break_minutes?: number;
+          break_start?: string;
+          created_at?: string;
+          daily_load_minutes?: number;
+          owner_id: string;
+          preferred_end?: string;
+          preferred_start?: string;
+          protected?: Json;
+          safety_lead_days?: number;
+          updated_at?: string;
+          version?: number;
+          work_end?: string;
+          work_start?: string;
+          working_days?: number[];
+        };
+        Update: {
+          break_minutes?: number;
+          break_start?: string;
+          created_at?: string;
+          daily_load_minutes?: number;
+          owner_id?: string;
+          preferred_end?: string;
+          preferred_start?: string;
+          protected?: Json;
+          safety_lead_days?: number;
+          updated_at?: string;
+          version?: number;
+          work_end?: string;
+          work_start?: string;
+          working_days?: number[];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "planning_preferences_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: true;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
         ];
       };
@@ -1105,6 +1174,22 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      apply_planning_proposal: {
+        Args: {
+          p_block_versions: Json;
+          p_blocks: Json;
+          p_effort_versions: Json;
+          p_event_versions: Json;
+          p_expected_version: number;
+          p_idempotency_key: string;
+          p_payload_hash: string;
+          p_preferences_version: number;
+          p_proposal_id: string;
+          p_timezone: string;
+          p_work_item_id: string;
+        };
+        Returns: Json;
+      };
       clean_text: { Args: { p_value: string }; Returns: string };
       create_event: {
         Args: {

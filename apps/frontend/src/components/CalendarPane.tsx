@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { entriesOnDate, toCalendarEntries, type CalendarEntry } from "../calendar/adapter";
+import { planCalendarEntries } from "../calendar/plan-display";
 import {
   addDays,
   addMonths,
@@ -66,7 +67,12 @@ function DayButton({
 
 function TimedBlock({ entry, hourHeight }: { entry: CalendarEntry; hourHeight: number }) {
   const { items, setEditing, moveEvent } = useWorkspace();
+  const planned = entry.kind === "ghost" || entry.kind === "plan";
   const open = () => {
+    if (planned) {
+      document.getElementById("planning-preview")?.focus();
+      return;
+    }
     const record = items.find((item) => item.id === entry.recordId);
     if (record) setEditing(record);
   };
@@ -75,11 +81,18 @@ function TimedBlock({ entry, hourHeight }: { entry: CalendarEntry; hourHeight: n
   const top = ((Math.max(start, START_HOUR * 60) - START_HOUR * 60) / 60) * hourHeight;
   const height = Math.max(((end - start) / 60) * hourHeight, 28);
   const drag = useRef<{ y: number; moved: boolean } | null>(null);
+  const label =
+    entry.kind === "ghost"
+      ? `${entry.title}, proposed, not saved`
+      : entry.kind === "plan"
+        ? `${entry.title}, planned time, not completed work`
+        : `${entry.title}, drag to change the time or activate to edit`;
   return (
     <button
       type="button"
-      aria-label={`${entry.title}, drag to change the time or activate to edit`}
+      aria-label={label}
       onPointerDown={(event) => {
+        if (planned) return;
         drag.current = { y: event.clientY, moved: false };
         event.currentTarget.setPointerCapture(event.pointerId);
       }}
@@ -96,11 +109,18 @@ function TimedBlock({ entry, hourHeight }: { entry: CalendarEntry; hourHeight: n
         const deltaMinutes = Math.round(((event.clientY - state.y) / hourHeight) * 4) * 15;
         moveEvent(entry.recordId, start + deltaMinutes);
       }}
-      className="absolute inset-x-1 cursor-pointer overflow-hidden rounded-[8px] border border-line bg-surface px-1.5 py-1 text-left shadow-[var(--shadow)]"
+      className={`absolute inset-x-1 cursor-pointer overflow-hidden rounded-[8px] px-1.5 py-1 text-left ${
+        entry.kind === "ghost"
+          ? "border border-dashed border-accent bg-canvas"
+          : entry.kind === "plan"
+            ? "border border-accent bg-accent-soft"
+            : "border border-line bg-surface shadow-[var(--shadow)]"
+      }`}
       style={{ top, height }}
     >
       <p className="truncate text-xs font-medium text-ink">{entry.title}</p>
       <p className="text-[11px] tabular-nums text-muted">
+        {entry.kind === "ghost" ? "Proposed " : entry.kind === "plan" ? "Planned " : ""}
         {String(Math.floor(start / 60)).padStart(2, "0")}:{String(start % 60).padStart(2, "0")}
       </p>
     </button>
@@ -108,13 +128,33 @@ function TimedBlock({ entry, hourHeight }: { entry: CalendarEntry; hourHeight: n
 }
 
 export function CalendarPane() {
-  const { today, selectedDate, setSelectedDate, view, items, density, weekStartsOn, setEditing } =
-    useWorkspace();
+  const {
+    today,
+    selectedDate,
+    setSelectedDate,
+    view,
+    items,
+    density,
+    weekStartsOn,
+    setEditing,
+    plan,
+    savedPlans,
+  } = useWorkspace();
   const openRecord = (id: string) => {
     const record = items.find((item) => item.id === id);
     if (record) setEditing(record);
   };
-  const entries = toCalendarEntries(items);
+  const proposalBlocks =
+    plan && plan.status !== "rejected"
+      ? plan.blocks.map((block) => ({ ...block, persisted: plan.status === "approved" }))
+      : [];
+  const entries = [
+    ...toCalendarEntries(items),
+    ...planCalendarEntries([...savedPlans, ...proposalBlocks]),
+  ].sort((a, b) => {
+    if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+    return (a.startMinutes ?? -1) - (b.startMinutes ?? -1);
+  });
   const hourHeight = density === "compact" ? 40 : 52;
   const regionRef = useRef<HTMLDivElement>(null);
 
@@ -249,9 +289,13 @@ function WeekGrid({
                       <SeverityMark entry={entry} />
                       <span className="min-w-0 flex-1">{entry.title}</span>
                       <span className="shrink-0 text-xs tabular-nums text-muted">
-                        {entry.allDay || entry.startMinutes === undefined
-                          ? "All day"
-                          : `${String(Math.floor(entry.startMinutes / 60)).padStart(2, "0")}:${String(entry.startMinutes % 60).padStart(2, "0")}`}
+                        {entry.kind === "ghost"
+                          ? "Proposed"
+                          : entry.kind === "plan"
+                            ? "Planned"
+                            : entry.allDay || entry.startMinutes === undefined
+                              ? "All day"
+                              : `${String(Math.floor(entry.startMinutes / 60)).padStart(2, "0")}:${String(entry.startMinutes % 60).padStart(2, "0")}`}
                       </span>
                     </li>
                   ))}

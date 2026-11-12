@@ -1,9 +1,7 @@
 # Planner contracts
 
-This package is documentation only. It does not contain a planner implementation.
+This package validates the planner API. It does not choose times.
 
-The deterministic planner has one authoritative engine. Phase 05 will put that engine in the Python backend and expose a versioned API. TypeScript may validate and display the contract. It must not grow a second scheduling algorithm.
+The only scheduler is `services/backend/src/second_brain/planner/engine.py`. `POST /api/v1/planner/preview` returns a proposal. `POST /api/v1/planner/apply` runs that same function again and rejects the call when the payload hash differs. TypeScript may parse the response with `parsePlanProposal` and render the `local_start` and `local_end` values. It must not search for another slot.
 
-Phase 00 does not define request or response payloads. Those land with the planner phase, in this package as types or schema files that mirror the Python API, after the API exists.
-
-See `docs/decisions/0004-single-authoritative-planner.md`.
+See `docs/decisions/0004-single-authoritative-planner.md` and `docs/architecture/planner.md`.

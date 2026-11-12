@@ -16,6 +16,7 @@ from starlette.responses import Response
 
 from second_brain import __version__
 from second_brain.api.routes.health import router as health_router
+from second_brain.api.routes.planner import router as planner_router
 from second_brain.api.routes.v1 import router as v1_router
 from second_brain.errors import (
     AppError,
@@ -82,6 +83,7 @@ def create_app() -> FastAPI:
     app.add_exception_handler(Exception, unhandled_error_handler)
     app.include_router(health_router)
     app.include_router(v1_router)
+    app.include_router(planner_router)
     return app
 
 

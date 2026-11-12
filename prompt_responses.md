@@ -791,3 +791,174 @@ Execute the selected diff-tab commit-and-push action.
 ```text
 \no need to workon multiple branches, everythign exists on main, merge and commit everything to maina dnfrom now on all work happens on main. updarte anyu fiels as needed. also the readme needs to updated reagualy, men5tioning what all featrures are available and also how to access thingfs etc. wwrite it downinsioemwhere and strcitl;y follow it aafter executing each prompt
 ```
+
+<!-- second-brain-journal-entry -->
+
+## jrn_20261112T124359Z_c0dd820a
+
+- kind: response
+- phase: 05
+- timestamp_utc: 2026-11-12T12:43:59Z
+- conversation_id: a142b468-8ffa-4cc7-a2b0-6eeaa310f21e
+- generation_id: 26938d8e-0a1c-41b3-9a5f-e11868852692
+- cursor_version: 3.29.15
+- capture_status: HOOK VERIFIED
+- response_status: 
+- pairs_with: jrn_20261112T121622Z_b879c5f0
+- attachment_count: 0
+- text_present: true
+
+```text
+Today, Upcoming, and To-Do are now projections of the same work item. Dismissal lives on a separate row, so a later pass cannot put a dismissed task back. This is on `main` at `d2d2a3d` and is pushed to `origin/main`.
+
+## Eligibility
+
+The only rule is `public.surface_decision`. The screen displays its result. A local due date is `due_on`, or `due_at` in the profile timezone.
+
+| Severity | Appears when the local due date is |
+| --- | --- |
+| Critical | within 7 days, including today and overdue |
+| High | within 3 days, including today and overdue |
+| Medium | within 1 day, including today and overdue |
+| Low | never, unless you pin it |
+
+A future date inside that window is Upcoming, with the reason **Due soon**. Today is **Due today**. A past date is **Overdue**. Everything else stays on To-Do with a reason such as **No due date**, **Low severity does not surface on its own**, **Outside the severity window**, **Completed**, **Cancelled**, or **Dismissed**.
+
+## State
+
+Pin sets `pinned_at` and shows the task on Today as **Manually pinned**. Dismiss sets `dismissed_at` and stores the severity, due value, and status in `eligibility_signature`. A later pin wins over an older dismiss. Restore sets `restored_at` and leaves the older timestamps in place. Each of those actions writes one audit row. A repeated save key returns the first result. A stale surface version raises `P0002` and does not write.
+
+Changing the due date or severity recalculates `current_eligibility` and does not clear the dismissal or the signature. `reconcile_auto_surface` and the scheduled `reconcile_auto_surface_all` update only that calculated text. A second run with the same instant writes nothing. There is still one `work_items` row per task.
+
+## How to use it
+
+On `/`, Today and Upcoming show the server reason. Dismiss is on those rows. Restore and Pin are on the To-Do row. The title opens the same task editor. The Workspace state menu can show Empty, Dense, and Overdue previews, and those previews are not saved. The full rule is in `docs/architecture/surfacing.md`.
+
+## Tests and screenshots
+
+`pnpm db:test` passed, 92 tests, including the new 50. Frontend unit tests, Python tests, typecheck, lint, env layout, and the secret scan passed. Playwright passed 12 tests, including keyboard dismiss and restore. I also clicked that path in the browser and opened the task editor and Settings.
+
+Screenshots for all seven viewports, both themes, and empty, dense, and overdue states are in `artifacts/screenshots/04-auto-surface/`. I looked at the 1440 light dense, 1920 light empty, 390 light dense, and 360 dark overdue shots. On a phone the calendar sits above the list, so Dismiss is below the fold and reachable by scrolling. No horizontal overflow was reported.
+
+## Limitations
+
+The worker names `public.reconcile_auto_surface_all` and does not open a database connection, so nothing is reconciled on a timer in this process. The signed-in browser path was not clicked against a hosted project. Supabase is not configured here. The database tests cover that path. Concurrent edits were checked as a stale version, not as two live sessions. The projection returns at most 500 tasks. A soft-deleted task still has no restore control on the screen. I have not started Phase 05.
+```
+
+<!-- second-brain-journal-entry -->
+
+## jrn_20261112T125027Z_8faa7d00
+
+- kind: prompt
+- phase: 05
+- timestamp_utc: 2026-11-12T12:50:27Z
+- conversation_id: a142b468-8ffa-4cc7-a2b0-6eeaa310f21e
+- generation_id: 52dcb0eb-c160-4f59-a22d-0b41eb02d19d
+- cursor_version: 3.29.15
+- capture_status: HOOK VERIFIED
+- response_status: PENDING
+- pairs_with: 
+- attachment_count: 3
+- text_present: true
+
+```text
+# SECOND BRAIN — PHASE 05: DETERMINISTIC PLANNER
+
+Read Part A, especially planner and approval requirements. Inspect schema, API and calendar adapter. Implement deterministic planning only. AI must not schedule or invent time slots.
+
+AUTHORITATIVE ENGINE
+Choose exactly one authoritative implementation location (recommended: Python backend planner service). Expose a versioned, typed API contract. TypeScript may validate/consume the contract but must not implement a second scheduling algorithm. Document this ADR.
+
+DATA
+Use separate `planning_blocks` (not ordinary events) and `task_effort_logs`. Planned time is not completed effort. Effort logs/completion events are authoritative for actual completed work. A planning block has task reference, start/end instants, timezone context, status, source, version and ownership.
+
+INPUTS
+Consider calendar busy time, protected hours, preferred planning windows, working hours, breaks, task effort estimate, logged effort, completion state, deadline/safety deadline, priority/severity, existing future active planning blocks, daily load and timezone. Distinguish free calendar availability from preferred planning windows.
+
+ALGORITHM
+- Deterministic, explainable and testable.
+- Compute remaining effort from estimate and authoritative effort logs.
+- Count only future active planning blocks; exclude cancelled/obsolete/completed blocks as appropriate.
+- Do not double-count completed effort.
+- Respect protected hours, breaks, daily load, calendar conflicts and preferred windows.
+- Return explicit overdue, infeasible and insufficient-capacity outcomes.
+- Never create negative planning horizons or arbitrary one-hour clamps.
+- Use documented deterministic scoring and tie-breaking.
+- Avoid scheduling past deadlines or overlapping blocks.
+- Account for timezone and DST.
+- Do not claim planned blocks are completed work.
+
+PROPOSALS
+Generate ghost blocks in a preview only; do not persist them until explicit user approval. Show why each slot was chosen, capacity impact, deadline feasibility and alternatives. On apply, revalidate all source versions, conflicts, capacity and ownership in one transaction. Reject stale proposals and ask for regeneration. Use idempotency.
+
+UI
+Integrate a planning preview in calendar with clear visual distinction between persisted events and unpersisted ghost blocks. Accessible approve/reject/edit flow. No AI-generated scheduling.
+
+TESTS
+Property/boundary tests for overlap, capacity, breaks, protected time, completed effort, existing blocks, overdue, insufficient capacity, timezone/DST, deterministic repeatability, stale versions and concurrent apply. Include realistic adversarial cases. Ensure frontend does not duplicate algorithm.
+
+VISUAL QA
+Inspect preview/approved/rejected/infeasible states at all required viewports/themes; capture and inspect screenshots under `artifacts/screenshots/05-planner/`.
+
+GIT/JOURNAL
+Branch `phase/05-planner`; commit `feat(planner): add deterministic capacity-aware planning`; push if configured. Append exact prompt and final response. Report algorithm, contract, invariants, tests, visual QA and limitations. Stop for approval.
+```
+
+<!-- second-brain-journal-entry -->
+
+## jrn_20261112T135815Z_7c4e2773
+
+- kind: prompt
+- phase: 05
+- timestamp_utc: 2026-11-12T13:58:15Z
+- conversation_id: a142b468-8ffa-4cc7-a2b0-6eeaa310f21e
+- generation_id: d45709b1-18a8-48c5-8feb-d887a8d38252
+- cursor_version: 3.29.15
+- capture_status: HOOK VERIFIED
+- response_status: PENDING
+- pairs_with: 
+- attachment_count: 3
+- text_present: true
+
+```text
+# SECOND BRAIN — PHASE 05: DETERMINISTIC PLANNER
+
+Read Part A, especially planner and approval requirements. Inspect schema, API and calendar adapter. Implement deterministic planning only. AI must not schedule or invent time slots.
+
+AUTHORITATIVE ENGINE
+Choose exactly one authoritative implementation location (recommended: Python backend planner service). Expose a versioned, typed API contract. TypeScript may validate/consume the contract but must not implement a second scheduling algorithm. Document this ADR.
+
+DATA
+Use separate `planning_blocks` (not ordinary events) and `task_effort_logs`. Planned time is not completed effort. Effort logs/completion events are authoritative for actual completed work. A planning block has task reference, start/end instants, timezone context, status, source, version and ownership.
+
+INPUTS
+Consider calendar busy time, protected hours, preferred planning windows, working hours, breaks, task effort estimate, logged effort, completion state, deadline/safety deadline, priority/severity, existing future active planning blocks, daily load and timezone. Distinguish free calendar availability from preferred planning windows.
+
+ALGORITHM
+- Deterministic, explainable and testable.
+- Compute remaining effort from estimate and authoritative effort logs.
+- Count only future active planning blocks; exclude cancelled/obsolete/completed blocks as appropriate.
+- Do not double-count completed effort.
+- Respect protected hours, breaks, daily load, calendar conflicts and preferred windows.
+- Return explicit overdue, infeasible and insufficient-capacity outcomes.
+- Never create negative planning horizons or arbitrary one-hour clamps.
+- Use documented deterministic scoring and tie-breaking.
+- Avoid scheduling past deadlines or overlapping blocks.
+- Account for timezone and DST.
+- Do not claim planned blocks are completed work.
+
+PROPOSALS
+Generate ghost blocks in a preview only; do not persist them until explicit user approval. Show why each slot was chosen, capacity impact, deadline feasibility and alternatives. On apply, revalidate all source versions, conflicts, capacity and ownership in one transaction. Reject stale proposals and ask for regeneration. Use idempotency.
+
+UI
+Integrate a planning preview in calendar with clear visual distinction between persisted events and unpersisted ghost blocks. Accessible approve/reject/edit flow. No AI-generated scheduling.
+
+TESTS
+Property/boundary tests for overlap, capacity, breaks, protected time, completed effort, existing blocks, overdue, insufficient capacity, timezone/DST, deterministic repeatability, stale versions and concurrent apply. Include realistic adversarial cases. Ensure frontend does not duplicate algorithm.
+
+VISUAL QA
+Inspect preview/approved/rejected/infeasible states at all required viewports/themes; capture and inspect screenshots under `artifacts/screenshots/05-planner/`.
+
+GIT/JOURNAL
+Branch `phase/05-planner`; commit `feat(planner): add deterministic capacity-aware planning`; push if configured. Append exact prompt and final response. Report algorithm, contract, invariants, tests, visual QA and limitations. Stop for approval.
+```

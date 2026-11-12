@@ -9,7 +9,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import type { PlanOverrides, PlanView, PlanBlockView } from "../calendar/plan-display";
 import { zonedDate } from "../productivity/time";
+import { applyPlan, previewPlan } from "../productivity/plan";
 import { loadWorkspace } from "../productivity/load";
 import {
   createEvent,
@@ -35,6 +37,7 @@ import type {
   WeekStart,
 } from "../demo/types";
 import { densePreview, overduePreview, previewBaseline } from "./surface-preview";
+import { planFixture, planFixtureItems } from "./plan-preview";
 import {
   DENSITY_KEY,
   NAME_KEY,
@@ -90,6 +93,12 @@ type WorkspaceContextValue = {
   applyRecord: (record: WorkspaceRecord) => void;
   removeRecord: (id: string) => void;
   reloadRecords: () => Promise<void>;
+  plan: PlanView | null;
+  savedPlans: PlanBlockView[];
+  planning: boolean;
+  requestPlan: (workItemId: string, overrides?: Partial<PlanOverrides>) => void;
+  approvePlan: () => void;
+  rejectPlan: () => void;
 };
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
@@ -113,7 +122,11 @@ export function WorkspaceProvider({
   const [items, setItems] = useState<WorkspaceRecord[]>(initial.records);
   const [pendingTaskId, setPendingTaskId] = useState<string | null>(null);
   const [filter, setFilter] = useState<TaskFilter>("open");
-  const [preview, setPreview] = useState<PreviewMode>("ready");
+  const [preview, setPreviewState] = useState<PreviewMode>("ready");
+  const [savedPlans, setSavedPlans] = useState<PlanBlockView[]>(initial.plans);
+  const [livePlan, setLivePlan] = useState<PlanView | null>(null);
+  const [planOverride, setPlanOverride] = useState<PlanView | null>(null);
+  const [planning, setPlanning] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [theme, setThemeState] = useState<ThemeChoice>("system");
   const [displayName, setDisplayNameState] = useState("Reader");
@@ -149,8 +162,26 @@ export function WorkspaceProvider({
 
   const denseItems = useMemo(() => densePreview(), []);
   const overdueItems = useMemo(() => overduePreview(), []);
+  const planItems = useMemo(() => planFixtureItems(today), [today]);
+  const planPreviewMode =
+    preview === "plan" ||
+    preview === "plan-approved" ||
+    preview === "plan-rejected" ||
+    preview === "plan-infeasible";
   const basePreview =
-    preview === "dense" ? denseItems : preview === "overdue" ? overdueItems : null;
+    preview === "dense"
+      ? denseItems
+      : preview === "overdue"
+        ? overdueItems
+        : planPreviewMode
+          ? planItems
+          : null;
+  const fixturePlan = planFixture(preview, today);
+  const plan = planOverride ?? fixturePlan ?? (preview === "ready" ? livePlan : null);
+  const setPreview = useCallback((mode: PreviewMode) => {
+    setPreviewState(mode);
+    setPlanOverride(null);
+  }, []);
   const previewItems =
     previewEdits && previewEdits.mode === preview ? previewEdits.items : basePreview;
 
@@ -204,6 +235,7 @@ export function WorkspaceProvider({
       return;
     }
     setItems(bundle.records);
+    setSavedPlans(bundle.plans);
     setNotice("");
   }, []);
 
@@ -260,9 +292,9 @@ export function WorkspaceProvider({
           if (action === "dismiss") {
             return {
               ...item,
-                surfaceSection: "todo" as const,
-                surfaceReason: undefined,
-                excludedReason: "Dismissed",
+              surfaceSection: "todo" as const,
+              surfaceReason: undefined,
+              excludedReason: "Dismissed",
               surfaceDismissed: true,
               surfacePinned: false,
             };
@@ -270,8 +302,8 @@ export function WorkspaceProvider({
           if (action === "pin") {
             return {
               ...item,
-                surfaceSection: "today" as const,
-                surfaceReason: "Manually pinned",
+              surfaceSection: "today" as const,
+              surfaceReason: "Manually pinned",
               excludedReason: undefined,
               surfaceDismissed: false,
               surfacePinned: true,
@@ -480,6 +512,76 @@ export function WorkspaceProvider({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  const requestPlan = useCallback(
+    (workItemId: string, overrides?: Partial<PlanOverrides>) => {
+      if (preview !== "ready" || initial.status !== "ready") {
+        setNotice(
+          initial.status === "ready"
+            ? "This preview is not saved."
+            : "Sign in to plan. Nothing was scheduled.",
+        );
+        return;
+      }
+      setPlanning(true);
+      void previewPlan({ workItemId, ...overrides }).then((result) => {
+        setPlanning(false);
+        if (!result.ok) {
+          setNotice(result.error);
+          return;
+        }
+        setLivePlan(result.plan);
+        setPlanOverride(null);
+        setNotice("");
+      });
+    },
+    [initial.status, preview],
+  );
+
+  const approvePlan = useCallback(() => {
+    const current = plan;
+    if (!current || current.status === "rejected" || current.blocks.length === 0) return;
+    if (current.fixture || preview !== "ready") {
+      setPlanOverride({
+        ...current,
+        status: "approved",
+        blocks: current.blocks.map((block) => ({ ...block, persisted: true })),
+      });
+      setNotice("This preview was not saved.");
+      return;
+    }
+    setPlanning(true);
+    void applyPlan({
+      workItemId: current.workItemId,
+      proposalId: current.proposalId,
+      payloadHash: current.payloadHash,
+      idempotencyKey: current.idempotencyKey,
+      dailyLoadMinutes: current.overrides.dailyLoadMinutes,
+      preferredStart: current.overrides.preferredStart,
+      preferredEnd: current.overrides.preferredEnd,
+    }).then((result) => {
+      setPlanning(false);
+      if (!result.ok) {
+        setNotice(result.error);
+        return;
+      }
+      setSavedPlans((rows) => [...result.plan.blocks, ...rows]);
+      setLivePlan(null);
+      setNotice("Planned time saved. It is not completed work.");
+    });
+  }, [plan, preview]);
+
+  const rejectPlan = useCallback(() => {
+    const current = plan;
+    if (!current || current.status === "rejected") return;
+    const rejected = { ...current, status: "rejected" as const, blocks: [], scheduledMinutes: 0 };
+    if (current.fixture || preview !== "ready") {
+      setPlanOverride(rejected);
+    } else {
+      setLivePlan(rejected);
+    }
+    setNotice("Rejected. Nothing was saved.");
+  }, [plan, preview]);
+
   const value = useMemo<WorkspaceContextValue>(
     () => ({
       today,
@@ -527,6 +629,12 @@ export function WorkspaceProvider({
       applyRecord,
       removeRecord,
       reloadRecords,
+      plan,
+      savedPlans: preview === "ready" ? savedPlans : [],
+      planning,
+      requestPlan,
+      approvePlan,
+      rejectPlan,
     }),
     [
       today,
@@ -565,6 +673,13 @@ export function WorkspaceProvider({
       applyRecord,
       removeRecord,
       reloadRecords,
+      setPreview,
+      plan,
+      savedPlans,
+      planning,
+      requestPlan,
+      approvePlan,
+      rejectPlan,
     ],
   );
 

@@ -7,7 +7,7 @@ This repository is a pnpm and uv monorepo:
 - `apps/frontend` — Next.js App Router. Signed-in people can save tasks, events, notes, and reminder definitions. The assistant does not write records.
 - `services/backend` — FastAPI API and a separate worker process. They share one Python package and image. The worker does not deliver reminders yet.
 - `packages/schemas` — shared validation.
-- `packages/planner-contracts` — planner contract notes only. There is one planner, and it is not implemented yet.
+- `packages/planner-contracts` — typed planner contract. The scheduler itself is the Python service.
 - `supabase/` — hosted Supabase migrations, local CLI config, and row-level security tests. Compose does not start a database.
 
 The hosted database is Supabase (PostgreSQL, Auth, and Storage). Gemini is the planned model provider and is not wired up.
@@ -87,27 +87,30 @@ These scripts load the root `.env`. There is no env file inside `apps/` or `serv
 
 ## Features
 
-Run `pnpm dev:frontend` and open `http://127.0.0.1:3000`. Saving requires a signed-in account and `pnpm exec supabase db push`. Until then the lists stay empty. The Workspace state menu can show Empty, Dense, and Overdue previews. Those previews are not saved.
+Run `pnpm dev:frontend` and open `http://127.0.0.1:3000`. Saving requires a signed-in account and `pnpm exec supabase db push`. Planning also needs `pnpm dev:api`. Until then the lists stay empty. The Workspace state menu can show Empty, Dense, Overdue, and the four plan previews. Those previews are not saved.
 
-| What                                 | How to open it                                                                                                                                    |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Calendar day, week, and month        | `/`. Day, Week, and Month. Arrow keys move the selected day.                                                                                      |
-| Today, Upcoming work, and To-Do      | The list on `/`. On a phone, Today is in the bottom bar.                                                                                          |
-| Why a task is in a section           | The row says Due today, Overdue, Due soon, or Manually pinned. To-Do says why something is left out, such as Dismissed or No due date.            |
-| Add a task, event, note, or reminder | Add. A task needs a due date and Critical, High, or Medium severity before it appears on Today or Upcoming. Low stays on To-Do unless you pin it. |
-| Search saved records                 | Search, or Ctrl+K / Cmd+K.                                                                                                                        |
-| Change or delete a record            | Select its title. Events can apply to this one, this and following, or the whole series.                                                          |
-| Dismiss, restore, or pin a task      | Dismiss on Today or Upcoming. Restore and Pin are on the To-Do row.                                                                               |
-| Mark a task done                     | Mark done on the To-Do row.                                                                                                                       |
-| Drag a timed event                   | On the day or week calendar, in 15-minute steps.                                                                                                  |
-| Settings                             | Settings, or `/settings`. Theme and display stay in this browser.                                                                                 |
-| Sign in, sign up, account            | Sign in, `/sign-in`, `/sign-up`, and `/account`.                                                                                                  |
-| Assistant                            | Assistant. It does not send anything.                                                                                                             |
-| Reminder definitions                 | The Reminders section. Nothing is delivered.                                                                                                      |
+| What                                 | How to open it                                                                                                                                                                                                               |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Calendar day, week, and month        | `/`. Day, Week, and Month. Arrow keys move the selected day.                                                                                                                                                                 |
+| Today, Upcoming work, and To-Do      | The list on `/`. On a phone, Today is in the bottom bar.                                                                                                                                                                     |
+| Why a task is in a section           | The row says Due today, Overdue, Due soon, or Manually pinned. To-Do says why something is left out, such as Dismissed or No due date.                                                                                       |
+| Add a task, event, note, or reminder | Add. A task needs a due date and Critical, High, or Medium severity before it appears on Today or Upcoming. Low stays on To-Do unless you pin it.                                                                            |
+| Search saved records                 | Search, or Ctrl+K / Cmd+K.                                                                                                                                                                                                   |
+| Change or delete a record            | Select its title. Events can apply to this one, this and following, or the whole series.                                                                                                                                     |
+| Dismiss, restore, or pin a task      | Dismiss on Today or Upcoming. Restore and Pin are on the To-Do row.                                                                                                                                                          |
+| Mark a task done                     | Mark done on the To-Do row.                                                                                                                                                                                                  |
+| Drag a timed event                   | On the day or week calendar, in 15-minute steps.                                                                                                                                                                             |
+| Settings                             | Settings, or `/settings`. Theme and display stay in this browser.                                                                                                                                                            |
+| Sign in, sign up, account            | Sign in, `/sign-in`, `/sign-up`, and `/account`.                                                                                                                                                                             |
+| Plan a task                          | Plan on a task. The preview is not saved. Approve stores planned time. Reject discards it. Update preview asks the planner for a new result after you change the daily load or preferred window. Run `pnpm dev:api` as well. |
+| Assistant                            | Assistant. It does not send anything and it does not schedule time.                                                                                                                                                          |
+| Reminder definitions                 | The Reminders section. Nothing is delivered.                                                                                                                                                                                 |
 
 Critical work appears 7 days before it is due, High 3 days, Medium 1 day, and Low never, using the timezone on the profile. Overdue open work in those three severities stays on Today until you dismiss it, finish it, or cancel it. Reconciliation does not bring a dismissed task back. The rules are in `docs/architecture/surfacing.md`.
 
-Not built yet: reminder delivery, the planner, assistant proposals, offline sync, and a restore control for a soft-deleted task. `restore_work_item` exists in the database. The screen does not call it.
+A dashed calendar block is a proposal. A solid accent block is planned time. Neither one is completed work. Completed work stays in effort logs.
+
+Not built yet: reminder delivery, assistant proposals, offline sync, and a restore control for a soft-deleted task. `restore_work_item` exists in the database. The screen does not call it. The rules for planning are in `docs/architecture/planner.md`.
 
 ## Checks
 

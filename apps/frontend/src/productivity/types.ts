@@ -1,3 +1,5 @@
+import type { PlanBlockView } from "../calendar/plan-display";
+
 export type Category = "personal" | "home" | "work" | "admin" | "learning";
 export type Severity = "critical" | "high" | "medium" | "low";
 export type RecordKind = "task" | "event" | "reminder" | "note";
@@ -40,6 +42,7 @@ export type WorkspaceBundle = {
   status: "ready" | "signed-out" | "error";
   message?: string;
   records: WorkspaceRecord[];
+  plans: PlanBlockView[];
   timeZone: string;
 };
 
